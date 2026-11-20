@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wheel</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: sans-serif;
+            font-weight: bold !important;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a0022;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            background-color: #1a0022;
+            background-image: url('./Nền 1.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            transform-origin: center center;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: transform;
+            transform: scale(1) rotate(0deg);
+        }
+
+        .bg-layer.zoomed,
+        .bg-layer.zoomed-yellow {
+            transform: scale(2.2) translateY(180px) rotate(0deg) !important;
+        }
+
+        .bg-layer.zoomed.tilt-red,
+        .bg-layer.zoomed-red {
+            transform: scale(2.2) translateY(180px) rotate(30deg) !important;
+        }
+
+        .bg-layer.zoomed.tilt-blue,
+        .bg-layer.zoomed-blue {
+            transform: scale(2.2) translateY(180px) rotate(-30deg) !important;
+        }
+
+        .view-navigation {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.75);
+            padding: 6px 12px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .view-btn {
+            padding: 8px 20px;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            background: #800080;
+            color: white;
+            font-weight: bold !important;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .view-btn:hover {
+            background: orange !important;
+            color: #000000 !important;
+        }
+
+        .view-btn.active {
+            background: #ffff00 !important;
+            color: #000000 !important;
+            border-color: #ffffff;
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.6);
+        }
+
+        #view-wheel {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .wheel-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 660px;
+            height: 660px;
+            /* Cố định tâm xoay tại chính giữa tâm bánh xe */
+            transform-origin: center center !important;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), margin-top 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            transform: scale(1) rotate(0deg);
+            margin-top: 0px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 1. EASE IN VÀNG: Zoom x2, xoay 0 deg, đẩy khung hình lên trên để thấy rõ 3 kim */
+        .wheel-area.zoomed {
+            transform: scale(2) rotate(0deg) !important;
+            margin-top: 760px;
+        }
+
+        /* 2. EASE IN ĐỎ: Giữ vị trí Zoom góc trên, xoay 30 deg */
+        .wheel-area.zoomed.tilt-red {
+            transform: scale(2) rotate(30deg) !important;
+            margin-top: 760px;
+        }
+
+        /* 3. EASE IN XANH: Giữ vị trí Zoom góc trên, xoay -30 deg */
+        .wheel-area.zoomed.tilt-blue {
+            transform: scale(2) rotate(-30deg) !important;
+            margin-top: 760px;
+        }
+
+        .wheel-container {
+            width: 560px;
+            height: 560px;
+            position: relative;
+            border-radius: 50%;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: high-quality;
+        }
+
+        #wheelGraphic {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: block;
+            position: relative;
+            transform-origin: center center !important;
+            overflow: visible;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: high-quality;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .wheel-face {
+            position: absolute;
+            top: 21px;
+            left: 21px;
+            width: calc(100% - 42px);
+            height: calc(100% - 42px);
+            border-radius: 50%;
+            background-image: url('./Nón.png');
+            background-position: center center !important;
+            background-repeat: no-repeat;
+            background-size: 100% 100% !important;
+            transform-origin: center center !important;
+            pointer-events: none;
+            overflow: hidden;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: high-quality;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #wheelGraphic.wheel-type-sub .wheel-face,
+        #wheelGraphic.wheel-type-special .wheel-face {
+            background-size: 101.86% 101.86% !important;
+        }
+
+        #wheelGraphic.wheel-type-normal .wheel-face,
+        #wheelGraphic.wheel-type-wheel_2 .wheel-face,
+        #wheelGraphic.wheel-type-wheel_3 .wheel-face,
+        #wheelGraphic.wheel-type-wheel_4 .wheel-face {
+            background-size: 100% 100% !important;
+        }
+
+        #specialValuePopup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: purple;
+            color: white;
+            padding: 12px 24px;
+            font-size: 26px;
+            border-radius: 8px;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            display: none;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* Chỉ hiển thị các ô thẻ khi ở Nón thường */
+        .wheel-type-sub .items-ring,
+        .wheel-type-special .items-ring {
+            display: none !important;
+        }
+
+        .items-ring {
+            position: absolute;
+            top: 21px;
+            left: 21px;
+            width: calc(100% - 42px);
+            height: calc(100% - 42px);
+            pointer-events: none;
+            z-index: 2;
+            transform-origin: center center !important;
+        }
+
+        .placed-item {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: center center !important;
+            display: none;
+        }
+
+        .placed-item img {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            object-fit: fill;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: high-quality;
+        }
+
+        .placed-item.is-card img {
+            top: 14px;
+            width: 9.4%;
+            max-height: 52px;
+            object-fit: contain;
+            clip-path: none;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        }
+
+        .placed-item.is-wedge img {
+            top: 0px;
+            width: 13.25%;
+            height: 30.2%;
+            object-fit: fill;
+            clip-path: none;
+        }
+
+        .wheel-ring-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            transform-origin: center center !important;
+            shape-rendering: geometricPrecision;
+        }
+
+        .pointer-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: center center !important;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .wrapper-red {
+            transform: rotate(-30deg);
+        }
+
+        .wrapper-yellow {
+            transform: rotate(0deg);
+        }
+
+        .wrapper-blue {
+            transform: rotate(30deg);
+        }
+
+        .pointer-body {
+            position: absolute;
+            top: -14px;
+            left: calc(50% - 12px);
+            width: 24px;
+            height: 38px;
+        }
+
+        .pointer-body svg path {
+            transition: fill 0.2s;
+        }
+
+        #pointer-red {
+            --p-color: #FFFFFF;
+        }
+
+        #pointer-yellow {
+            --p-color: #FFFFFF;
+        }
+
+        #pointer-blue {
+            --p-color: #FFFFFF;
+        }
+
+        #view-scores {
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 60px 20px 20px 20px;
+            overflow-y: auto;
+        }
+
+        .players-scoreboard {
+            width: 100%;
+            max-width: 820px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            z-index: 10;
+        }
+
+        .player-row {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .score-boxes {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+
+        .score-box {
+            flex: 1;
+            padding: 12px;
+            font-size: 22px;
+            text-align: center;
+            border-radius: 8px;
+            border: 2px solid white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .row-red .score-box {
+            background: #ff0000;
+            color: #ffffff;
+        }
+
+        .row-yellow .score-box {
+            background: #ffff00;
+            color: #000000;
+            border-color: #000000;
+        }
+
+        .row-blue .score-box {
+            background: #0000ff;
+            color: #ffffff;
+        }
+
+        .cards-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .cards-line {
+            display: flex;
+            gap: 6px;
+            justify-content: space-between;
+        }
+
+        .card-slot {
+            flex: 1;
+            padding: 6px 3px;
+            font-size: 10px;
+            text-align: center;
+            border-radius: 4px;
+            background: #000000;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .card-slot.active {
+            background: green !important;
+            color: white !important;
+            border-color: #000000;
+        }
+
+        /* VIEW 3: PHẦN THƯỞNG & Ô ĐẶC BIỆT */
+        #view-custom {
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 70px 20px 30px 20px;
+            overflow-y: auto;
+            box-sizing: border-box;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #090d16 100%);
+        }
+
+        .custom-view-container {
+            width: 100%;
+            max-width: 960px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 10;
+            margin: 0 auto;
+        }
+
+        .special-boxes-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.5fr;
+            gap: 12px;
+        }
+
+        .v3-card {
+            background: rgba(15, 23, 42, 0.75);
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            height: 100%;
+            min-height: 110px;
+        }
+
+        .v3-card-header {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .v3-card-value {
+            font-size: 20px;
+            font-weight: 900;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        .v3-card-jackpot {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(180, 83, 9, 0.35) 100%);
+        }
+        .v3-card-jackpot .v3-card-header {
+            color: #fbbf24;
+        }
+        .v3-card-jackpot .v3-card-value {
+            color: #fef08a;
+            font-size: 21px;
+        }
+
+        .v3-card-mystery {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(29, 78, 216, 0.35) 100%);
+        }
+        .v3-card-mystery .v3-card-header {
+            color: #60a5fa;
+        }
+        .v3-card-mystery .v3-card-value {
+            color: #ffffff;
+            font-size: 21px;
+        }
+
+        .v3-card-safe {
+            border-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(4, 120, 87, 0.3) 100%);
+        }
+        .v3-card-safe .v3-card-header {
+            color: #34d399;
+        }
+        .v3-card-safe .v3-card-value {
+            color: #a7f3d0;
+            font-size: 19px;
+            margin-bottom: 6px;
+        }
+
+        .v3-safe-cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .v3-safe-card {
+            padding: 3px 5px;
+            font-size: 9.5px;
+            font-weight: bold;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.65);
+            color: rgba(255, 255, 255, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .v3-safe-card.active {
+            background: #10b981 !important;
+            color: #ffffff !important;
+            border-color: #ffffff;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+        }
+
+        /* BẢNG PHẦN THƯỞNG */
+        .v3-rewards-section {
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            padding: 16px 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+        }
+
+        .v3-rewards-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #fbbf24;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 12px rgba(251, 191, 36, 0.4);
+        }
+
+        .v3-rewards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .v3-reward-cell {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #334155;
+            border-radius: 8px;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .v3-reward-cell:hover {
+            border-color: #fbbf24;
+            transform: translateY(-1px);
+        }
+
+        .v3-reward-num {
+            background: #3b82f6;
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 13px;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .v3-reward-val {
+            font-size: 15px;
+            font-weight: 900;
+            color: #f8fafc;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            letter-spacing: 0.5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .special-boxes-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .v3-rewards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="bgLayer" class="bg-layer"></div>
+
+    <div class="view-navigation" id="viewNav">
+        <button id="btn-view-wheel" class="view-btn active" onclick="switchView('wheel')">View 1: Vòng quay</button>
+        <button id="btn-view-scores" class="view-btn" onclick="switchView('scores')">View 2: Điểm số</button>
+        <button id="btn-view-custom" class="view-btn" onclick="switchView('custom')">View 3: Phần thưởng</button>
+    </div>
+
+    <!-- VIEW 1: VÒNG QUAY -->
+    <div id="view-wheel">
+        <div class="wheel-area" id="wheelArea">
+            <div class="wheel-container" id="wheelContainer">
+                <div id="wheelGraphic">
+                    <div class="wheel-face" id="wheelFace"></div>
+                    <div class="items-ring" id="itemsRing"></div>
+                    <svg id="wheelRingSvg" class="wheel-ring-svg" viewBox="0 0 560 560" width="560" height="560">
+                        <defs>
+                            <filter id="dot-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feDropShadow dx="0" dy="1" stdDeviation="0.75" flood-color="#000000" flood-opacity="0.85" />
+                            </filter>
+                        </defs>
+                        <!-- Vòng tròn đen chuẩn xác tuyệt đối (chuẩn hình tròn, không lệch tâm) -->
+                        <circle cx="280" cy="280" r="269" fill="none" stroke="#000000" stroke-width="22" shape-rendering="geometricPrecision" />
+                        <!-- 72 chấm tròn chuẩn xác nằm chính giữa dải viền đen -->
+                        <g id="svgDotsGroup"></g>
+                    </svg>
+                </div>
+                <div id="specialValuePopup">0 điểm</div>
+                <div class="pointer-wrapper wrapper-red">
+                    <div class="pointer-body" id="pointer-red">
+                        <svg width="24" height="38" viewBox="0 0 20 32" style="display: block;" shape-rendering="geometricPrecision">
+                            <defs>
+                                <filter id="p-shadow-red" x="-30%" y="-30%" width="160%" height="160%">
+                                    <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.6" />
+                                </filter>
+                            </defs>
+                            <path d="M 10,31 L 3.2,11.5 A 7.5,7.5 0 1,1 16.8,11.5 Z" fill="var(--p-color)"
+                                stroke="white" stroke-width="1.8" stroke-linejoin="round" filter="url(#p-shadow-red)" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="pointer-wrapper wrapper-yellow">
+                    <div class="pointer-body" id="pointer-yellow">
+                        <svg width="24" height="38" viewBox="0 0 20 32" style="display: block;" shape-rendering="geometricPrecision">
+                            <defs>
+                                <filter id="p-shadow-yellow" x="-30%" y="-30%" width="160%" height="160%">
+                                    <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.6" />
+                                </filter>
+                            </defs>
+                            <path d="M 10,31 L 3.2,11.5 A 7.5,7.5 0 1,1 16.8,11.5 Z" fill="var(--p-color)"
+                                stroke="white" stroke-width="1.8" stroke-linejoin="round" filter="url(#p-shadow-yellow)" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="pointer-wrapper wrapper-blue">
+                    <div class="pointer-body" id="pointer-blue">
+                        <svg width="24" height="38" viewBox="0 0 20 32" style="display: block;" shape-rendering="geometricPrecision">
+                            <defs>
+                                <filter id="p-shadow-blue" x="-30%" y="-30%" width="160%" height="160%">
+                                    <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.6" />
+                                </filter>
+                            </defs>
+                            <path d="M 10,31 L 3.2,11.5 A 7.5,7.5 0 1,1 16.8,11.5 Z" fill="var(--p-color)"
+                                stroke="white" stroke-width="1.8" stroke-linejoin="round" filter="url(#p-shadow-blue)" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: ĐIỂM SỐ -->
+    <div id="view-scores">
+        <div class="players-scoreboard">
+            <div class="player-row row-red" id="row-red">
+                <div class="score-boxes">
+                    <div class="score-box" id="display-red-round">0</div>
+                    <div class="score-box" id="display-red-total">0</div>
+                </div>
+                <div class="cards-grid">
+                    <div class="cards-line">
+                        <div class="card-slot" data-card="0">Thẻ 1/2 (1)</div>
+                        <div class="card-slot" data-card="1">Thẻ 1/2 (2)</div>
+                        <div class="card-slot" data-card="2">Cơ Hội</div>
+                        <div class="card-slot" data-card="3">Kháng Mất Điểm</div>
+                        <div class="card-slot" data-card="4">10.000</div>
+                        <div class="card-slot" data-card="5">1 Triệu</div>
+                        <div class="card-slot" data-card="6">Thẻ Nhân Đôi</div>
+                    </div>
+                    <div class="cards-line">
+                        <div class="card-slot" data-card="7">Bảo Vệ</div>
+                        <div class="card-slot" data-card="8">Thẻ Thêm Lượt</div>
+                        <div class="card-slot" data-card="9">Ô Nhân Đôi</div>
+                        <div class="card-slot" data-card="10">Ô Thêm Lượt</div>
+                        <div class="card-slot" data-card="11">Thẻ May mắn</div>
+                        <div class="card-slot" data-card="12">Thẻ May rủi</div>
+                        <div class="card-slot" data-card="13">Thẻ Tích điểm</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-row row-yellow" id="row-yellow">
+                <div class="score-boxes">
+                    <div class="score-box" id="display-yellow-round">0</div>
+                    <div class="score-box" id="display-yellow-total">0</div>
+                </div>
+                <div class="cards-grid">
+                    <div class="cards-line">
+                        <div class="card-slot" data-card="0">Thẻ 1/2 (1)</div>
+                        <div class="card-slot" data-card="1">Thẻ 1/2 (2)</div>
+                        <div class="card-slot" data-card="2">Cơ Hội</div>
+                        <div class="card-slot" data-card="3">Kháng Mất Điểm</div>
+                        <div class="card-slot" data-card="4">10.000</div>
+                        <div class="card-slot" data-card="5">1 Triệu</div>
+                        <div class="card-slot" data-card="6">Thẻ Nhân Đôi</div>
+                    </div>
+                    <div class="cards-line">
+                        <div class="card-slot" data-card="7">Bảo Vệ</div>
+                        <div class="card-slot" data-card="8">Thẻ Thêm Lượt</div>
+                        <div class="card-slot" data-card="9">Ô Nhân Đôi</div>
+                        <div class="card-slot" data-card="10">Ô Thêm Lượt</div>
+                        <div class="card-slot" data-card="11">Thẻ May mắn</div>
+                        <div class="card-slot" data-card="12">Thẻ May rủi</div>
+                        <div class="card-slot" data-card="13">Thẻ Tích điểm</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-row row-blue" id="row-blue">
+                <div class="score-boxes">
+                    <div class="score-box" id="display-blue-round">0</div>
+                    <div class="score-box" id="display-blue-total">0</div>
+                </div>
+                <div class="cards-grid">
+                    <div class="cards-line">
+                        <div class="card-slot" data-card="0">Thẻ 1/2 (1)</div>
+                        <div class="card-slot" data-card="1">Thẻ 1/2 (2)</div>
+                        <div class="card-slot" data-card="2">Cơ Hội</div>
+                        <div class="card-slot" data-card="3">Kháng Mất Điểm</div>
+                        <div class="card-slot" data-card="4">10.000</div>
+                        <div class="card-slot" data-card="5">1 Triệu</div>
+                        <div class="card-slot" data-card="6">Thẻ Nhân Đôi</div>
+                    </div>
+                    <div class="cards-line">
+                        <div class="card-slot" data-card="7">Bảo Vệ</div>
+                        <div class="card-slot" data-card="8">Thẻ Thêm Lượt</div>
+                        <div class="card-slot" data-card="9">Ô Nhân Đôi</div>
+                        <div class="card-slot" data-card="10">Ô Thêm Lượt</div>
+                        <div class="card-slot" data-card="11">Thẻ May mắn</div>
+                        <div class="card-slot" data-card="12">Thẻ May rủi</div>
+                        <div class="card-slot" data-card="13">Thẻ Tích điểm</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 3: PHẦN THƯỞNG & Ô ĐẶC BIỆT -->
+    <div id="view-custom">
+        <div class="custom-view-container">
+            <!-- HÀNG CÁC Ô ĐẶC BIỆT (Độc đắc, Ẩn số, Két sắt & Thẻ) -->
+            <div class="special-boxes-dashboard">
+                <!-- Ô ĐỘC ĐẮC -->
+                <div class="v3-card v3-card-jackpot">
+                    <div class="v3-card-header">Ô Độc Đắc</div>
+                    <div class="v3-card-value" id="view3-jackpot">0 đ</div>
+                </div>
+
+                <!-- Ô ẨN SỐ -->
+                <div class="v3-card v3-card-mystery">
+                    <div class="v3-card-header">Ô Ẩn Số</div>
+                    <div class="v3-card-value" id="view3-mystery">5.000</div>
+                </div>
+
+                <!-- Ô KÉT SẮT & CÁC THẺ -->
+                <div class="v3-card v3-card-safe">
+                    <div class="v3-card-header">Ô Két Sắt</div>
+                    <div class="v3-card-value" id="view3-safe-score">0 đ</div>
+                    <div class="v3-safe-cards-grid">
+                        <div class="v3-safe-card" id="view3-safe-card-0">Thẻ 1/2 (1)</div>
+                        <div class="v3-safe-card" id="view3-safe-card-1">Thẻ 1/2 (2)</div>
+                        <div class="v3-safe-card" id="view3-safe-card-2">Thẻ Cơ hội</div>
+                        <div class="v3-safe-card" id="view3-safe-card-3">Thẻ nhân đôi</div>
+                        <div class="v3-safe-card" id="view3-safe-card-4">Ô 1 Triệu</div>
+                        <div class="v3-safe-card" id="view3-safe-card-5">Thẻ May mắn</div>
+                        <div class="v3-safe-card" id="view3-safe-card-6">Thẻ May rủi</div>
+                        <div class="v3-safe-card" id="view3-safe-card-7">Thẻ Tích điểm</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BẢNG PHẦN THƯỞNG (24 Ô: 6 HÀNG X 4 CỘT) -->
+            <div class="v3-rewards-section">
+                <div class="v3-rewards-title">BẢNG PHẦN THƯỞNG</div>
+                <div class="v3-rewards-grid" id="view3-rewards-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var supabaseUrl = 'https://vjwwbzjzcbtkksehwfll.supabase.co';
+        var supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqd3diemp6Y2J0a2tzZWh3ZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NDIyOTYsImV4cCI6MjA5NTUxODI5Nn0.Zcn4hvlLtRirM-SPGrFvu3ivu8RYF9WngvbxCMCGfh4';
+        var supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('roomid');
+
+        if (!roomId) {
+            document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-size:24px;color:white;text-align:center;padding:20px;">Vui lòng truy cập với tham số ?roomid=MÃ_PHÒNG<br><br><a href="index.html" style="color:yellow;">Quay về đăng nhập</a></div>';
+            throw new Error('Missing roomid');
+        }
+
+        // BỔ SUNG: Khai báo đối tượng Audio toàn cục
+        let currentGlobalAudio = null;
+
+        function playSoundEffect(soundFile) {
+            if (soundFile === 'STOP') {
+                if (currentGlobalAudio) {
+                    currentGlobalAudio.pause();
+                    currentGlobalAudio.currentTime = 0;
+                }
+                return;
+            }
+
+            if (currentGlobalAudio) {
+                currentGlobalAudio.pause();
+                currentGlobalAudio.currentTime = 0;
+            }
+
+            // Đảm bảo file âm thanh nằm chung thư mục với file HTML
+            currentGlobalAudio = new Audio('./' + soundFile);
+            currentGlobalAudio.play().catch(function (error) {
+                console.warn("Chưa tương tác với trang nên chưa thể autoplay sound:", error);
+            });
+        }
+
+        let currentRotation = 270;
+        let isSpecialMode = false;
+        let specialWedges = [];
+        let isSpinningNow = false;
+        let activeWheelType = 'normal';
+        let pointerLightsState = { red: 'off', yellow: 'off', blue: 'off' };
+        let pointerVisibilityState = { red: true, blue: true };
+        let currentSpinMusic = 'none';
+
+        function normalizeAngle(deg) {
+            return ((deg % 360) + 360) % 360;
+        }
+
+        function getVisualRotation() {
+            const style = wheelGraphic.style.transform || '';
+            const match = style.match(/rotate\(\s*([-\d.]+)deg\s*\)/);
+            if (match) return parseFloat(match[1]);
+            return currentRotation;
+        }
+
+        function inferWheelTypeFromBg(bg) {
+            if (!bg) return 'normal';
+            if (bg.includes('Nón Phụ')) return 'sub_wheel';
+            if (bg.includes('Đặc Biệt')) return 'special';
+            if (bg.includes('Nón 2')) return 'wheel_2';
+            if (bg.includes('Nón 3')) return 'wheel_3';
+            if (bg.includes('Nón 4')) return 'wheel_4';
+            return 'normal';
+        }
+
+        function isRegularWheelType(type) {
+            return ['normal', 'wheel_2', 'wheel_3', 'wheel_4'].includes(type);
+        }
+
+        const wheelGraphic = document.getElementById('wheelGraphic');
+        const wheelFace = document.getElementById('wheelFace');
+        const wheelArea = document.getElementById('wheelArea');
+        const itemsRing = document.getElementById('itemsRing');
+        const specialValuePopup = document.getElementById('specialValuePopup');
+
+        const itemsPlacementConfig = {
+            "Thẻ Phần thưởng": { angle: 15, img: "Thẻ Phần Thưởng.png" },
+            "Thẻ 1/2 thứ 1": { angle: 30, img: "Thẻ 12 thứ 1.png" },
+            "Thẻ 1/2 thứ 2": { angle: 240, img: "Thẻ 12 thứ 2.png" },
+            "Thẻ Cơ hội": { angle: 45, img: "Thẻ Cơ Hội.png" },
+            "Thẻ Nhân Đôi": { angle: 180, img: "Thẻ Nhân Đôi.png" },
+            "Thẻ Kháng Mất điểm": { angle: 105, img: "Thẻ Kháng Mất Điểm.png" },
+            "Thẻ Bảo vệ": { angle: 210, img: "Thẻ Bảo Vệ.png" },
+            "Thẻ Thêm lượt": { angle: 255, img: "Thẻ Thêm Lượt.png" },
+            "Thẻ May rủi": { angle: 60, img: "Thẻ May Rủi.png" },
+            "Thẻ May mắn": { angle: 120, img: "Thẻ May Mắn.png" },
+            "Thẻ Tích điểm": { angle: 270, img: "Thẻ Tích Điểm.png" },
+            "Ô Độc đắc": { angle: 135, img: "Ô Độc Đắc.png" },
+            "Ô Ẩn số": { angle: 315, img: "Ô Ẩn Số.png" },
+            "Ô Bí Mật 1": { angle: 150, img: "Ô Bí Mật 1.png" },
+            "Ô Bí Mật 2": { angle: 330, img: "Ô Bí Mật 2.png" },
+            "Ô Siêu Tốc": { angle: 135, img: "Ô Siêu Tốc.png" },
+            "Ô Thêm lượt": { angle: 315, img: "Ô Thêm Lượt.png" },
+            "Ô Két sắt": { angle: 135, img: "Ô Két Sắt.png" },
+            "Ô 1 Triệu": { angle: 135, img: "Ô 1 Triệu.png" }
+        };
+
+        Object.keys(itemsPlacementConfig).forEach(itemName => {
+            const config = itemsPlacementConfig[itemName];
+            const itemWrapper = document.createElement('div');
+            itemWrapper.className = 'placed-item';
+            if (itemName.startsWith("Thẻ")) {
+                itemWrapper.classList.add('is-card');
+            } else {
+                itemWrapper.classList.add('is-wedge');
+            }
+            itemWrapper.id = 'render-item-' + itemName.replace(/\s+/g, '_');
+            itemWrapper.style.transform = `rotate(${config.angle}deg)`;
+
+            const imgEl = document.createElement('img');
+            imgEl.src = './' + config.img;
+            imgEl.alt = itemName;
+            itemWrapper.appendChild(imgEl);
+            itemsRing.appendChild(itemWrapper);
+        });
+
+        function applyItemAngle(itemName, angle) {
+            const parsed = parseFloat(angle);
+            if (isNaN(parsed)) return;
+            const targetId = 'render-item-' + itemName.replace(/\s+/g, '_');
+            const el = document.getElementById(targetId);
+            if (el) {
+                el.style.transform = `rotate(${parsed}deg)`;
+            }
+        }
+
+        function updateWheelElementsVisibility() {
+            const isRegular = isRegularWheelType(activeWheelType);
+            wheelGraphic.classList.remove('wheel-type-normal', 'wheel-type-sub', 'wheel-type-special', 'wheel-type-wheel_2', 'wheel-type-wheel_3', 'wheel-type-wheel_4');
+            wheelGraphic.classList.add('wheel-type-' + activeWheelType);
+
+            if (itemsRing) {
+                itemsRing.style.display = isRegular ? 'block' : 'none';
+            }
+        }
+        updateWheelElementsVisibility();
+
+        const svgDotsGroup = document.getElementById('svgDotsGroup');
+        if (svgDotsGroup) {
+            svgDotsGroup.innerHTML = '';
+            for (let i = 0; i < 72; i++) {
+                const angleDeg = i * 5 - 7.5;
+                const rad = (angleDeg - 90) * Math.PI / 180;
+                const cx = 280 + 269 * Math.cos(rad);
+                const cy = 280 + 269 * Math.sin(rad);
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', cx.toFixed(3));
+                circle.setAttribute('cy', cy.toFixed(3));
+                circle.setAttribute('r', '5.1');
+                circle.setAttribute('fill', '#ffffff');
+                circle.setAttribute('filter', 'url(#dot-shadow)');
+                circle.setAttribute('shape-rendering', 'geometricPrecision');
+                svgDotsGroup.appendChild(circle);
+            }
+        }
+
+        function switchView(viewName) {
+            const viewWheel = document.getElementById('view-wheel');
+            const viewScores = document.getElementById('view-scores');
+            const viewCustom = document.getElementById('view-custom');
+            const btnWheel = document.getElementById('btn-view-wheel');
+            const btnScores = document.getElementById('btn-view-scores');
+            const btnCustom = document.getElementById('btn-view-custom');
+
+            viewWheel.style.display = 'none';
+            viewScores.style.display = 'none';
+            if (viewCustom) viewCustom.style.display = 'none';
+            btnWheel.classList.remove('active');
+            btnScores.classList.remove('active');
+            if (btnCustom) btnCustom.classList.remove('active');
+
+            if (viewName === 'scores') {
+                viewScores.style.display = 'flex';
+                btnScores.classList.add('active');
+            } else if (viewName === 'custom' || viewName === 'rewards' || viewName === 'view3') {
+                if (viewCustom) viewCustom.style.display = 'flex';
+                if (btnCustom) btnCustom.classList.add('active');
+            } else {
+                viewWheel.style.display = 'flex';
+                btnWheel.classList.add('active');
+            }
+        }
+
+        const initialViewParam = urlParams.get('view');
+        if (initialViewParam === 'scores') {
+            switchView('scores');
+        } else if (initialViewParam === 'custom' || initialViewParam === 'rewards' || initialViewParam === 'view3') {
+            switchView('custom');
+        }
+
+        const defaultRewardItems = [
+            "0", "50", "100", "200", "250", "300", "400", "500", "600", "700",
+            "750", "800", "900", "1.000", "1.250", "1.500", "1.750", "2.000",
+            "2.500", "x1.5", "x2", "Ngôi sao", "May rủi", "May mắn"
+        ];
+
+        function initView3RewardsGrid() {
+            const container = document.getElementById('view3-rewards-grid');
+            if (!container) return;
+            container.innerHTML = '';
+            for (let i = 0; i < 24; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'v3-reward-cell';
+                cell.id = 'view3-reward-cell-' + i;
+
+                const num = document.createElement('div');
+                num.className = 'v3-reward-num';
+                num.innerText = (i + 1);
+
+                const val = document.createElement('div');
+                val.className = 'v3-reward-val';
+                val.id = 'view3-reward-val-' + i;
+                const itemVal = defaultRewardItems[i] !== undefined ? defaultRewardItems[i] : (i + 1);
+                val.innerText = itemVal;
+
+                if (itemVal === 'Ngôi sao') {
+                    val.style.color = '#fbbf24';
+                } else if (itemVal === 'May mắn') {
+                    val.style.color = '#34d399';
+                } else if (itemVal === 'May rủi') {
+                    val.style.color = '#f87171';
+                } else if (itemVal === 'x1.5' || itemVal === 'x2') {
+                    val.style.color = '#e879f9';
+                }
+
+                cell.appendChild(num);
+                cell.appendChild(val);
+                container.appendChild(cell);
+            }
+        }
+        initView3RewardsGrid();
+
+        let currentCustomGameData = null;
+
+        const mysteryNumberImageMap = {
+            "1.000": "Ẩn Số 1000.png",
+            "2.500": "Ẩn Số 2500.png",
+            "5.000": "Ẩn Số 5000.png",
+            "7.500": "Ẩn Số 7500.png",
+            "10.000": "Ẩn Số 10000.png",
+            "25.000": "Ẩn Số 25000.png",
+            "Nhân đôi": "Ẩn Số Nhân Đôi.png",
+            "Chia đôi": "Ẩn Số Chia Đôi.png",
+            "Mất lượt": "Ẩn Số Mất Lượt.png",
+            "Mất điểm": "Ẩn Số Mất Điểm.png",
+            "Mất Điểm": "Ẩn Số Mất Điểm.png"
+        };
+
+        function updateMysteryWedgeImage(data) {
+            const mysteryWrapper = document.getElementById('render-item-Ô_Ẩn_số');
+            if (!mysteryWrapper) return;
+            const mysteryImg = mysteryWrapper.querySelector('img');
+            if (!mysteryImg) return;
+            if (data && data.mysteryRevealed && data.currentMysteryNumber !== undefined) {
+                const mappedFile = mysteryNumberImageMap[data.currentMysteryNumber];
+                mysteryImg.src = './' + (mappedFile || 'Ô Ẩn Số.png');
+            } else {
+                mysteryImg.src = './Ô Ẩn Số.png';
+            }
+        }
+
+        function executeUpdateCustomData(data) {
+            if (!data) return;
+            currentCustomGameData = Object.assign({}, currentCustomGameData || {}, data);
+            // 1. Ô Độc đắc
+            if (data.jackpotScore !== undefined) {
+                const el = document.getElementById('view3-jackpot');
+                if (el) el.innerText = (typeof data.jackpotScore === 'number' ? data.jackpotScore.toLocaleString('vi-VN') : data.jackpotScore) + " đ";
+            }
+            // 2. Ô Ẩn số
+            if (data.currentMysteryNumber !== undefined) {
+                const el = document.getElementById('view3-mystery');
+                if (el) el.innerText = data.currentMysteryNumber;
+            }
+            updateMysteryWedgeImage(currentCustomGameData);
+            // 3. Ô Két sắt & các thẻ Két sắt
+            if (data.safeScore !== undefined) {
+                const el = document.getElementById('view3-safe-score');
+                if (el) el.innerText = (typeof data.safeScore === 'number' ? data.safeScore.toLocaleString('vi-VN') : data.safeScore) + " đ";
+            }
+            if (data.safeCardsState && Array.isArray(data.safeCardsState)) {
+                for (let i = 0; i < 8; i++) {
+                    const cardEl = document.getElementById('view3-safe-card-' + i);
+                    if (cardEl) {
+                        if (data.safeCardsState[i]) {
+                            cardEl.classList.add('active');
+                        } else {
+                            cardEl.classList.remove('active');
+                        }
+                    }
+                }
+            }
+            // 4. Giá trị các phần thưởng (24 ô)
+            if (data.rewardBoxes && Array.isArray(data.rewardBoxes)) {
+                for (let i = 0; i < 24; i++) {
+                    const valEl = document.getElementById('view3-reward-val-' + i);
+                    if (valEl && data.rewardBoxes[i] !== undefined) {
+                        const val = data.rewardBoxes[i];
+                        valEl.innerText = val;
+                        if (val === 'Ngôi sao') {
+                            valEl.style.color = '#fbbf24';
+                        } else if (val === 'May mắn') {
+                            valEl.style.color = '#34d399';
+                        } else if (val === 'May rủi') {
+                            valEl.style.color = '#f87171';
+                        } else if (val === 'x1.5' || val === 'x2') {
+                            valEl.style.color = '#e879f9';
+                        } else {
+                            valEl.style.color = '#ffffff';
+                        }
+                    }
+                }
+            }
+        }
+
+        function buildWheelState() {
+            let tilt = 'none';
+            if (wheelArea.classList.contains('tilt-red')) tilt = 'red';
+            else if (wheelArea.classList.contains('tilt-blue')) tilt = 'blue';
+
+            const state = {
+                currentRotation: currentRotation,
+                isSpecialMode: isSpecialMode,
+                specialWedges: specialWedges,
+                wheelDisplay: wheelGraphic.style.display,
+                wheelBg: wheelFace ? wheelFace.style.backgroundImage : "url('./Nón.png')",
+                activeWheelType: activeWheelType,
+                zoomed: wheelArea.classList.contains('zoomed'),
+                subWheelTilt: tilt,
+                popupDisplay: specialValuePopup.style.display,
+                popupText: specialValuePopup.innerText,
+                pointerLights: pointerLightsState,
+                pointerVisibility: pointerVisibilityState,
+                spinMusic: currentSpinMusic,
+                backgroundIndex: currentBgIndex,
+                backgroundUrl: currentBgUrl,
+                itemsState: {}
+            };
+            Object.keys(itemsPlacementConfig).forEach(itemName => {
+                const targetId = 'render-item-' + itemName.replace(/\s+/g, '_');
+                const el = document.getElementById(targetId);
+                if (el) state.itemsState[itemName] = el.style.display;
+            });
+            return state;
+        }
+
+        let wheelSaveChain = Promise.resolve();
+
+        function savePartialWheelState(partialUpdates) {
+            if (!roomId || !partialUpdates) return Promise.resolve();
+            wheelSaveChain = wheelSaveChain.then(async () => {
+                try {
+                    const { data } = await supabase
+                        .from('game_room_state')
+                        .select('wheel_state')
+                        .eq('room_id', roomId)
+                        .single();
+
+                    let currentState = {};
+                    if (data && data.wheel_state) {
+                        currentState = data.wheel_state;
+                    }
+                    const newState = Object.assign({}, currentState, partialUpdates);
+                    await supabase.from('game_room_state').upsert({
+                        room_id: roomId,
+                        wheel_state: newState,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'room_id' });
+                } catch (e) {
+                    console.error('savePartialWheelState error:', e);
+                }
+            });
+            return wheelSaveChain;
+        }
+
+        async function saveWheelState() {
+            if (isSpinningNow || !roomId) return;
+            return savePartialWheelState({
+                currentRotation: currentRotation,
+                popupDisplay: specialValuePopup.style.display,
+                popupText: specialValuePopup.innerText
+            });
+        }
+
+        function updateWheelBackgroundSize() {
+            const isRegular = isRegularWheelType(activeWheelType);
+            if (wheelFace) {
+                if (isRegular) {
+                    wheelFace.style.backgroundSize = '100% 100%';
+                } else {
+                    wheelFace.style.backgroundSize = '101.86% 101.86%';
+                }
+                wheelFace.style.backgroundPosition = 'center center';
+                wheelFace.style.backgroundRepeat = 'no-repeat';
+            }
+        }
+
+        let currentBgIndex = 1;
+        let currentBgUrl = './Nền 1.jpg';
+
+        function applyWheelBackground(bgIndexOrUrl) {
+            if (bgIndexOrUrl === 1 || bgIndexOrUrl === '1' || bgIndexOrUrl === './Nền 1.jpg' || bgIndexOrUrl === 'Nền 1.jpg') {
+                currentBgIndex = 1;
+                currentBgUrl = './Nền 1.jpg';
+            } else if (bgIndexOrUrl === 2 || bgIndexOrUrl === '2' || bgIndexOrUrl === './Nền 2.jpg' || bgIndexOrUrl === 'Nền 2.jpg') {
+                currentBgIndex = 2;
+                currentBgUrl = './Nền 2.jpg';
+            } else if (bgIndexOrUrl === 3 || bgIndexOrUrl === '3' || bgIndexOrUrl === './Nền 3.jpg' || bgIndexOrUrl === 'Nền 3.jpg') {
+                currentBgIndex = 3;
+                currentBgUrl = './Nền 3.jpg';
+            } else if (typeof bgIndexOrUrl === 'string' && bgIndexOrUrl) {
+                currentBgUrl = bgIndexOrUrl;
+            } else {
+                currentBgIndex = 1;
+                currentBgUrl = './Nền 1.jpg';
+            }
+
+            document.body.style.backgroundImage = 'none';
+            document.body.style.backgroundColor = '#1a0022';
+            const bgLayer = document.getElementById('bgLayer');
+            if (bgLayer) {
+                bgLayer.style.backgroundImage = `url('${currentBgUrl}')`;
+            }
+            localStorage.setItem('wheel_bg', currentBgIndex);
+        }
+
+        function updateBackgroundZoom(isZoomed, tilt) {
+            const bgLayer = document.getElementById('bgLayer');
+            if (!bgLayer) return;
+            bgLayer.classList.remove('zoomed', 'zoomed-red', 'zoomed-yellow', 'zoomed-blue', 'tilt-red', 'tilt-blue');
+            if (isZoomed) {
+                bgLayer.classList.add('zoomed');
+                if (tilt === 'red') {
+                    bgLayer.classList.add('tilt-red', 'zoomed-red');
+                } else if (tilt === 'blue') {
+                    bgLayer.classList.add('tilt-blue', 'zoomed-blue');
+                } else {
+                    bgLayer.classList.add('zoomed-yellow');
+                }
+            }
+        }
+
+        try {
+            if (window.BroadcastChannel) {
+                const bgChannel = new BroadcastChannel('wheel_bg_channel');
+                bgChannel.onmessage = (e) => {
+                    if (e.data && (e.data.bgUrl || e.data.bgIndex)) {
+                        applyWheelBackground(e.data.bgUrl || e.data.bgIndex);
+                    }
+                };
+
+                const zoomBc = new BroadcastChannel('wheel_zoom_channel');
+                zoomBc.onmessage = (e) => {
+                    if (e.data) {
+                        if (e.data.event === 'zoom_pointer') {
+                            if (e.data.type === 'in') {
+                                wheelArea.classList.add('zoomed');
+                                wheelArea.classList.remove('tilt-red', 'tilt-blue');
+                                updateBackgroundZoom(true, 'yellow');
+                            } else {
+                                wheelArea.classList.remove('zoomed', 'tilt-red', 'tilt-blue');
+                                updateBackgroundZoom(false, 'none');
+                            }
+                        } else if (e.data.event === 'tilt_sub_wheel') {
+                            wheelArea.classList.add('zoomed');
+                            wheelArea.classList.remove('tilt-red', 'tilt-blue');
+                            if (e.data.direction === 'red') {
+                                wheelArea.classList.add('tilt-red');
+                                updateBackgroundZoom(true, 'red');
+                            } else if (e.data.direction === 'blue') {
+                                wheelArea.classList.add('tilt-blue');
+                                updateBackgroundZoom(true, 'blue');
+                            }
+                        }
+                    }
+                };
+            }
+        } catch (e) {}
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'wheel_bg' && e.newValue) {
+                applyWheelBackground(e.newValue);
+            }
+        });
+
+        const savedBg = localStorage.getItem('wheel_bg');
+        if (savedBg) {
+            applyWheelBackground(savedBg);
+        }
+
+        function applyWheelState(state) {
+            if (!state) return;
+            currentRotation = (state.currentRotation !== undefined && state.currentRotation !== null) ? state.currentRotation : 270;
+            isSpecialMode = state.isSpecialMode || false;
+            specialWedges = state.specialWedges || [];
+
+            if (state.backgroundUrl || state.backgroundIndex) {
+                applyWheelBackground(state.backgroundUrl || state.backgroundIndex);
+            }
+
+            wheelGraphic.style.transition = 'none';
+            wheelGraphic.style.transform = 'rotate(' + currentRotation + 'deg)';
+            wheelGraphic.style.display = state.wheelDisplay || 'block';
+            const bg = state.wheelBg || "url('./Nón.png')";
+            if (wheelFace) wheelFace.style.backgroundImage = bg;
+            activeWheelType = state.activeWheelType || inferWheelTypeFromBg(bg);
+            updateWheelBackgroundSize();
+
+            // BỔ SUNG: Khôi phục chính xác góc nghiêng/zoom khi F5 hoặc mở muộn
+            wheelArea.classList.remove('zoomed', 'tilt-red', 'tilt-blue');
+            if (state.zoomed) {
+                wheelArea.classList.add('zoomed');
+                if (state.subWheelTilt === 'red') {
+                    wheelArea.classList.add('tilt-red');
+                    updateBackgroundZoom(true, 'red');
+                } else if (state.subWheelTilt === 'blue') {
+                    wheelArea.classList.add('tilt-blue');
+                    updateBackgroundZoom(true, 'blue');
+                } else {
+                    updateBackgroundZoom(true, 'yellow');
+                }
+            } else {
+                updateBackgroundZoom(false, 'none');
+            }
+
+            if (state.popupDisplay !== undefined) {
+                specialValuePopup.style.display = state.popupDisplay || 'none';
+            }
+            if (state.popupText !== undefined) {
+                specialValuePopup.innerText = state.popupText || '0 điểm';
+            }
+
+            Object.keys(itemsPlacementConfig).forEach(itemName => {
+                const targetId = 'render-item-' + itemName.replace(/\s+/g, '_');
+                const el = document.getElementById(targetId);
+                if (!el) return;
+                if (state.itemsState) {
+                    el.style.display = state.itemsState[itemName] || 'none';
+                }
+                const angleVal = (state.itemAngles && state.itemAngles[itemName] !== undefined)
+                    ? state.itemAngles[itemName]
+                    : itemsPlacementConfig[itemName].angle;
+                applyItemAngle(itemName, angleVal);
+            });
+
+            updateWheelElementsVisibility();
+
+            // Sync pointer lights
+            if (state.pointerLights) {
+                pointerLightsState = Object.assign({}, state.pointerLights);
+                ['red', 'yellow', 'blue'].forEach(pName => {
+                    executePointerLight(pName, pointerLightsState[pName] || 'off');
+                });
+            }
+
+            if (state.pointerVisibility) {
+                pointerVisibilityState = Object.assign({ red: true, blue: true }, state.pointerVisibility);
+                ['red', 'blue'].forEach(pName => {
+                    executePointerVisibility(pName, pointerVisibilityState[pName] !== false);
+                });
+            }
+
+            if (state.spinMusic !== undefined) {
+                currentSpinMusic = state.spinMusic;
+            }
+
+            if (state.custom_game_data) {
+                executeUpdateCustomData(state.custom_game_data);
+            }
+        }
+
+        async function loadWheelState() {
+            const { data } = await supabase
+                .from('game_room_state')
+                .select('wheel_state, scores, player_cards')
+                .eq('room_id', roomId)
+                .single();
+            if (data) {
+                if (data.wheel_state) {
+                    try { applyWheelState(data.wheel_state); } catch (e) { console.error(e); }
+                }
+                if (data.scores) {
+                    try { executeUpdateScores(data.scores); } catch (e) { console.error(e); }
+                }
+                if (data.player_cards) {
+                    try {
+                        ['red', 'yellow', 'blue'].forEach(color => {
+                            if (data.player_cards[color]) {
+                                for (let cardIdx = 0; cardIdx < 14; cardIdx++) {
+                                    executeUpdatePlayerCard(color, cardIdx, !!data.player_cards[color][cardIdx]);
+                                }
+                            }
+                        });
+                    } catch (e) { console.error(e); }
+                }
+            }
+        }
+
+        function executeToggleItem(itemName, isShow) {
+            const targetId = 'render-item-' + itemName.replace(/\s+/g, '_');
+            const itemElement = document.getElementById(targetId);
+            if (itemElement) {
+                itemElement.style.display = isShow ? 'block' : 'none';
+            }
+        }
+
+        function executeToggleWheel(type, isShow) {
+            if (!isShow) {
+                wheelGraphic.style.display = 'none';
+                return;
+            }
+            wheelGraphic.style.display = 'block';
+
+            if (type === 'special') {
+                if (wheelFace) wheelFace.style.backgroundImage = "url('./Nón Đặc Biệt.png')";
+                isSpecialMode = true;
+                activeWheelType = 'special';
+            } else if (type === 'sub_wheel') {
+                if (wheelFace) wheelFace.style.backgroundImage = "url('./Nón Phụ.png')";
+                isSpecialMode = true;
+                activeWheelType = 'sub_wheel';
+            } else if (type === 'wheel_2') {
+                if (wheelFace) wheelFace.style.backgroundImage = "url('./Nón 2.png')";
+                isSpecialMode = false;
+                activeWheelType = 'wheel_2';
+                specialValuePopup.style.display = 'none';
+            } else if (type === 'wheel_3') {
+                if (wheelFace) wheelFace.style.backgroundImage = "url('./Nón 3.png')";
+                isSpecialMode = false;
+                activeWheelType = 'wheel_3';
+                specialValuePopup.style.display = 'none';
+            } else if (type === 'wheel_4') {
+                if (wheelFace) wheelFace.style.backgroundImage = "url('./Nón 4.png')";
+                isSpecialMode = false;
+                activeWheelType = 'wheel_4';
+                specialValuePopup.style.display = 'none';
+            } else {
+                if (wheelFace) wheelFace.style.backgroundImage = "url('./Nón.png')";
+                isSpecialMode = false;
+                activeWheelType = 'normal';
+                specialValuePopup.style.display = 'none';
+            }
+            updateWheelBackgroundSize();
+            updateWheelElementsVisibility();
+        }
+
+        const MIN_SPIN_ROTATIONS = 5;
+
+        function computeSpinTarget(startRot, duration, randomOffset, minRotations) {
+            const minRot = (minRotations || MIN_SPIN_ROTATIONS) * 360;
+            let finalDuration = parseFloat(duration);
+            if (isNaN(finalDuration) || finalDuration <= 0) finalDuration = 5;
+            const durationRot = finalDuration * 360;
+            const totalExtra = Math.max(minRot, durationRot) + (randomOffset || 0);
+            const start = parseFloat(startRot);
+            return { startRot: start, targetRot: start + totalExtra, finalDuration: finalDuration };
+        }
+
+        // BIẾN TOÀN CỤC PHỤ TRÁCH THỰC HIỆN ĐỒNG BỘ MƯỢT MÀ THEO FRAME THỜI GIAN
+        let animationFrameId = null;
+
+        function executeSpin(duration, randomOffset, startTime, startRotFromSource, minRotations) {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            isSpinningNow = true;
+
+            if (wheelGraphic) {
+                wheelGraphic.style.transition = 'none';
+                wheelGraphic.style.willChange = 'transform';
+            }
+
+            const startRotBase = (startRotFromSource !== undefined && startRotFromSource !== null && !isNaN(startRotFromSource))
+                ? normalizeAngle(parseFloat(startRotFromSource))
+                : normalizeAngle(getVisualRotation());
+
+            const spin = computeSpinTarget(startRotBase, duration, randomOffset, minRotations);
+            const startRot = spin.startRot;
+            const targetRot = spin.targetRot;
+            const finalDuration = spin.finalDuration;
+
+            currentRotation = startRot;
+            wheelGraphic.style.transform = `rotate(${startRot}deg)`;
+
+            if (document.getElementById('specialValuePopup')) {
+                document.getElementById('specialValuePopup').style.display = 'none';
+            }
+
+            const startTimestamp = Date.now();
+            const durationMs = finalDuration * 1000;
+
+            function easeOutQuint(t) {
+                return 1 - Math.pow(1 - t, 5);
+            }
+
+            function updateProgress() {
+                const now = Date.now();
+                const elapsed = now - startTimestamp;
+
+                if (elapsed >= durationMs) {
+                    const finalNorm = normalizeAngle(targetRot);
+                    currentRotation = finalNorm;
+                    if (wheelGraphic) wheelGraphic.style.willChange = 'auto';
+                    wheelGraphic.style.transform = `rotate(${finalNorm}deg)`;
+                    animationFrameId = null;
+                    isSpinningNow = false;
+                    savePartialWheelState({ currentRotation: finalNorm });
+                } else {
+                    const t = Math.min(Math.max(elapsed / durationMs, 0), 1);
+                    const progress = easeOutQuint(t);
+                    const currentPos = startRot + (targetRot - startRot) * progress;
+
+                    wheelGraphic.style.transform = `rotate(${currentPos}deg)`;
+                    animationFrameId = requestAnimationFrame(updateProgress);
+                }
+            }
+            animationFrameId = requestAnimationFrame(updateProgress);
+        }
+
+        function executeResetRotation() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            isSpinningNow = false;
+            currentRotation = 270;
+            if (wheelGraphic) {
+                wheelGraphic.style.willChange = 'auto';
+                wheelGraphic.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+                wheelGraphic.style.transform = 'rotate(270deg)';
+            }
+            specialValuePopup.style.display = 'none';
+        }
+
+        function executePointerLight(pointerName, state) {
+            const pointerObj = document.getElementById('pointer-' + pointerName);
+            if (!pointerObj) return;
+            pointerLightsState[pointerName] = state;
+            if (state === 'on') {
+                if (pointerName === 'red') pointerObj.style.setProperty('--p-color', '#FF0000');
+                if (pointerName === 'yellow') pointerObj.style.setProperty('--p-color', '#FFFF00');
+                if (pointerName === 'blue') pointerObj.style.setProperty('--p-color', '#0000FF');
+            } else {
+                pointerObj.style.setProperty('--p-color', '#FFFFFF');
+            }
+        }
+
+        function executePointerVisibility(pointerName, isVisible) {
+            const pointerObj = document.getElementById('pointer-' + pointerName);
+            if (!pointerObj) return;
+            pointerVisibilityState[pointerName] = isVisible;
+            const wrapper = pointerObj.closest('.pointer-wrapper') || pointerObj;
+            wrapper.style.display = isVisible ? 'block' : 'none';
+        }
+
+        function getWedgeValueAtYellowPointer() {
+            if (!isSpecialMode || specialWedges.length === 0) return "Chưa xáo giá trị";
+            const rotation = getVisualRotation();
+            let angleAtTop = normalizeAngle(360 - normalizeAngle(rotation));
+            let wedgeIndex = Math.floor(normalizeAngle(angleAtTop + 7.5) / 15) % 24;
+            let result = specialWedges[wedgeIndex];
+            return typeof result === 'number' ? result.toLocaleString() + " điểm" : result;
+        }
+
+        function executeShowValue() {
+            if (!isSpecialMode) return;
+            currentRotation = getVisualRotation();
+            specialValuePopup.innerText = getWedgeValueAtYellowPointer();
+            specialValuePopup.style.display = 'block';
+            saveWheelState();
+        }
+
+        function executeHideValue() {
+            specialValuePopup.style.display = 'none';
+            saveWheelState();
+        }
+
+        function executeFindHighest(startTime, targetRotFromSource, targetIndexFromSource) {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            if (!isSpecialMode || specialWedges.length === 0) return;
+            isSpinningNow = true;
+
+            if (wheelGraphic) {
+                wheelGraphic.style.transition = 'none';
+                wheelGraphic.style.willChange = 'transform';
+            }
+
+            const parseVal = (v) => typeof v === 'string' ? parseInt(v.replace('x', '')) : v;
+            let targetIndex;
+            let targetRot;
+
+            const startRot = normalizeAngle(getVisualRotation());
+            wheelGraphic.style.transform = `rotate(${startRot}deg)`;
+
+            if (targetRotFromSource !== undefined && targetRotFromSource !== null && !isNaN(targetRotFromSource)
+                && targetIndexFromSource !== undefined && targetIndexFromSource !== null) {
+                targetIndex = targetIndexFromSource;
+                targetRot = startRot + (normalizeAngle(targetRotFromSource) - startRot + 360) % 360 + 1080;
+            } else {
+                const numericValues = specialWedges.map(parseVal);
+                const maxVal = Math.max(...numericValues);
+                targetIndex = numericValues.indexOf(maxVal);
+                const targetCenterAngle = targetIndex * 15;
+                let targetAngleDiff = (360 - targetCenterAngle) - startRot;
+                if (targetAngleDiff <= 0) targetAngleDiff += 360;
+                targetRot = startRot + targetAngleDiff + 1080;
+            }
+
+            specialValuePopup.style.display = 'none';
+
+            const startTimestamp = Date.now();
+            const durationMs = 4000;
+
+            function easeOutQuint(t) {
+                return 1 - Math.pow(1 - t, 5);
+            }
+
+            function updateFindHighestProgress() {
+                const now = Date.now();
+                const elapsed = now - startTimestamp;
+
+                if (elapsed >= durationMs) {
+                    const finalNorm = normalizeAngle(targetRot);
+                    currentRotation = finalNorm;
+                    if (wheelGraphic) wheelGraphic.style.willChange = 'auto';
+                    wheelGraphic.style.transform = `rotate(${finalNorm}deg)`;
+
+                    let realValue = specialWedges[targetIndex];
+                    specialValuePopup.innerText = typeof realValue === 'number' ? realValue.toLocaleString() + " điểm" : realValue;
+                    specialValuePopup.style.display = 'block';
+
+                    savePartialWheelState({
+                        currentRotation: finalNorm,
+                        popupDisplay: 'block',
+                        popupText: specialValuePopup.innerText
+                    });
+                    animationFrameId = null;
+                    isSpinningNow = false;
+                } else {
+                    const t = Math.min(Math.max(elapsed / durationMs, 0), 1);
+                    const progress = easeOutQuint(t);
+                    const currentPos = startRot + (targetRot - startRot) * progress;
+
+                    wheelGraphic.style.transform = `rotate(${currentPos}deg)`;
+                    animationFrameId = requestAnimationFrame(updateFindHighestProgress);
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(updateFindHighestProgress);
+        }
+
+        function executeUpdateScores(scores) {
+            if (!scores) return;
+            document.getElementById('display-red-round').innerText = (scores.redRound || 0).toLocaleString();
+            document.getElementById('display-red-total').innerText = (scores.redTotal || 0).toLocaleString();
+            document.getElementById('display-yellow-round').innerText = (scores.yellowRound || 0).toLocaleString();
+            document.getElementById('display-yellow-total').innerText = (scores.yellowTotal || 0).toLocaleString();
+            document.getElementById('display-blue-round').innerText = (scores.blueRound || 0).toLocaleString();
+            document.getElementById('display-blue-total').innerText = (scores.blueTotal || 0).toLocaleString();
+        }
+
+        function executeUpdatePlayerCard(color, cardIdx, isActive) {
+            const container = document.getElementById('row-' + color);
+            if (!container) return;
+            const slot = container.querySelector(`.card-slot[data-card="${cardIdx}"]`);
+            if (slot) {
+                if (isActive) slot.classList.add('active');
+                else slot.classList.remove('active');
+            }
+        }
+
+        function executeSyncAllPlayerCards(playerCards) {
+            if (!playerCards) return;
+            ['red', 'yellow', 'blue'].forEach(color => {
+                if (playerCards[color]) {
+                    for (let cardIdx = 0; cardIdx < 14; cardIdx++) {
+                        executeUpdatePlayerCard(color, cardIdx, !!playerCards[color][cardIdx]);
+                    }
+                }
+            });
+        }
+
+        loadWheelState();
+
+        try {
+            const channel = supabase.channel('wheel_room_' + roomId);
+            channel.on('broadcast', { event: 'toggle_wheel' }, function (payload) {
+                executeToggleWheel(payload.payload.type, payload.payload.isShow);
+            }).on('broadcast', { event: 'spin_wheel' }, function (payload) {
+                const musicToPlay = (payload.payload && payload.payload.spinMusic !== undefined) ? payload.payload.spinMusic : currentSpinMusic;
+                if (musicToPlay && musicToPlay !== 'none') {
+                    playSoundEffect(musicToPlay);
+                }
+                executeSpin(payload.payload.duration, payload.payload.randomOffset, payload.payload.startTime, payload.payload.startRot, payload.payload.minRotations);
+            }).on('broadcast', { event: 'pointer_light' }, function (payload) {
+                executePointerLight(payload.payload.pointerName, payload.payload.state);
+            }).on('broadcast', { event: 'pointer_visibility' }, function (payload) {
+                if (payload && payload.payload) {
+                    executePointerVisibility(payload.payload.pointerName, payload.payload.visible);
+                }
+            }).on('broadcast', { event: 'set_spin_music' }, function (payload) {
+                if (payload && payload.payload && payload.payload.spinMusic !== undefined) {
+                    currentSpinMusic = payload.payload.spinMusic;
+                }
+            }).on('broadcast', { event: 'zoom_pointer' }, function (payload) {
+                if (payload.payload.type === 'in') {
+                    wheelArea.classList.add('zoomed');
+                    wheelArea.classList.remove('tilt-red', 'tilt-blue');
+                    updateBackgroundZoom(true, 'yellow');
+                } else if (payload.payload.type === 'out') {
+                    wheelArea.classList.remove('zoomed', 'tilt-red', 'tilt-blue');
+                    updateBackgroundZoom(false, 'none');
+                }
+            }).on('broadcast', { event: 'tilt_sub_wheel' }, function (payload) {
+                wheelArea.classList.add('zoomed');
+                wheelArea.classList.remove('tilt-red', 'tilt-blue');
+
+                if (payload.payload.direction === 'red') {
+                    wheelArea.classList.add('tilt-red');
+                    updateBackgroundZoom(true, 'red');
+                } else if (payload.payload.direction === 'blue') {
+                    wheelArea.classList.add('tilt-blue');
+                    updateBackgroundZoom(true, 'blue');
+                }
+            }).on('broadcast', { event: 'toggle_item' }, function (payload) {
+                executeToggleItem(payload.payload.itemName, payload.payload.isShow);
+            }).on('broadcast', { event: 'set_item_angle' }, function (payload) {
+                if (payload && payload.payload && payload.payload.itemName !== undefined) {
+                    applyItemAngle(payload.payload.itemName, payload.payload.angle);
+                }
+            }).on('broadcast', { event: 'shuffle_special' }, function (payload) {
+                specialWedges = payload.payload.wedges;
+                specialValuePopup.style.display = 'none';
+            }).on('broadcast', { event: 'show_value' }, function () {
+                executeShowValue();
+            }).on('broadcast', { event: 'hide_value' }, function () {
+                executeHideValue();
+            }).on('broadcast', { event: 'find_highest' }, function (payload) {
+                executeFindHighest(payload.payload.startTime, payload.payload.targetRot, payload.payload.targetIndex);
+            }).on('broadcast', { event: 'sync_scores' }, function (payload) {
+                executeUpdateScores(payload.payload);
+            }).on('broadcast', { event: 'toggle_player_card' }, function (payload) {
+                executeUpdatePlayerCard(payload.payload.color, payload.payload.cardIdx, payload.payload.isActive);
+            }).on('broadcast', { event: 'sync_player_cards' }, function (payload) {
+                executeSyncAllPlayerCards(payload.payload);
+            }).on('broadcast', { event: 'reset_rotation' }, function () {
+                executeResetRotation();
+            }).on('broadcast', { event: 'sync_custom_data' }, function (payload) {
+                if (payload && payload.payload) {
+                    executeUpdateCustomData(payload.payload);
+                }
+            }).on('broadcast', { event: 'full_wheel_sync' }, function (payload) {
+                if (!payload || !payload.payload) return;
+                if (payload.payload.wheelState && !isSpinningNow) {
+                    applyWheelState(payload.payload.wheelState);
+                }
+                if (payload.payload.scores) {
+                    executeUpdateScores(payload.payload.scores);
+                }
+                if (payload.payload.playerCards) {
+                    executeSyncAllPlayerCards(payload.payload.playerCards);
+                }
+            }).on('broadcast', { event: 'play_sound' }, function (payload) {
+                if (payload && payload.payload && payload.payload.sound) {
+                    playSoundEffect(payload.payload.sound);
+                }
+            }).on('broadcast', { event: 'set_background' }, function (payload) {
+                if (payload && payload.payload) {
+                    applyWheelBackground(payload.payload.bgUrl || payload.payload.bgIndex);
+                }
+            }).subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    channel.send({ event: 'request_sync', type: 'broadcast', payload: {} });
+                    loadWheelState();
+                }
+            });
+
+            channel.on('broadcast', { event: 'request_sync' }, async function () {
+                if (isSpinningNow) return;
+                const state = buildWheelState();
+                channel.send({
+                    event: 'spin_wheel_sync',
+                    type: 'broadcast',
+                    payload: {
+                        rotation: state.currentRotation,
+                        isSpecialMode: state.isSpecialMode,
+                        wedges: state.specialWedges,
+                        popupDisplay: state.popupDisplay,
+                        popupText: state.popupText
+                    }
+                });
+            }).on('broadcast', { event: 'spin_wheel_sync' }, function (payload) {
+                if (isSpinningNow) return;
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                currentRotation = payload.payload.rotation;
+                isSpecialMode = payload.payload.isSpecialMode;
+                specialWedges = payload.payload.wedges;
+                wheelGraphic.style.transition = 'none';
+                wheelGraphic.style.transform = 'rotate(' + currentRotation + 'deg)';
+                if (payload.payload.popupDisplay !== undefined) {
+                    specialValuePopup.style.display = payload.payload.popupDisplay;
+                }
+                if (payload.payload.popupText !== undefined) {
+                    specialValuePopup.innerText = payload.payload.popupText;
+                }
+            });
+
+        } catch (e) { }
+
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.keyCode === 123) e.preventDefault();
+            if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+
+</html>

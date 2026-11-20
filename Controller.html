@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controller</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: sans-serif;
+            font-weight: bold !important;
+        }
+
+        body {
+            padding: 6px;
+            margin: 0;
+            background-color: #f0f2f5;
+            font-size: 12px;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .section {
+            background: white;
+            padding: 6px 8px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .section h2 {
+            margin: 0 0 5px 0;
+            font-size: 13px;
+            color: #222;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .grid-pointer {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4px;
+        }
+
+        .grid-6x4 {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 3px;
+            margin-top: 4px;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 5px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #800080;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: bold;
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: orange !important;
+            color: #000000 !important;
+        }
+
+        button.btn-off {
+            background: #ff00ff;
+            color: #000000;
+            font-weight: bold;
+        }
+
+        button.btn-off:hover {
+            background: orange !important;
+            color: #000000 !important;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            padding: 4px 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 90px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        button:disabled,
+        button[disabled],
+        input:disabled,
+        input[disabled],
+        select:disabled,
+        select[disabled] {
+            opacity: 0.35 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            filter: grayscale(0.8) !important;
+            box-shadow: none !important;
+        }
+
+        .item-angle-select {
+            width: 100%;
+            font-size: 10px;
+            padding: 2px;
+            margin-bottom: 3px;
+            border: 1px solid #cbd5e1;
+            border-radius: 3px;
+            background: #ffffff;
+            color: #0f172a;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-item-active {
+            background: #16a34a !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 0 1px #14532d inset;
+        }
+
+        #btnCreateRoom {
+            opacity: 1 !important;
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            filter: none !important;
+        }
+
+        .room-alert-inactive {
+            background: #fee2e2 !important;
+            border: 1px solid #ef4444 !important;
+            color: #991b1b !important;
+            padding: 6px 8px;
+            border-radius: 4px;
+        }
+
+        .room-alert-active {
+            background: #ecfdf5 !important;
+            border: 1px solid #10b981 !important;
+            color: #065f46 !important;
+            padding: 6px 8px;
+            border-radius: 4px;
+        }
+
+        .item-card {
+            border: 1px solid #e0e0e0;
+            padding: 3px 4px;
+            border-radius: 4px;
+            text-align: center;
+            background: #fafafa;
+            font-size: 10.5px;
+        }
+
+        .pointer-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+            padding: 4px 6px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .pointer-control button {
+            padding: 3px 6px;
+            font-size: 10px;
+        }
+
+        .wedge-cell {
+            padding: 4px 2px;
+            text-align: center;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+            font-size: 9.5px;
+            line-height: 1.1;
+            font-weight: bold;
+        }
+
+        /* THIẾT KẾ ĐIỀU KHIỂN NGƯỜI CHƠI */
+        .player-control-block {
+            border: 2px solid #ccc;
+            padding: 6px 8px;
+            margin-top: 4px;
+            border-radius: 6px;
+        }
+
+        .block-red {
+            border-color: red;
+            background-color: #fff5f5;
+        }
+
+        .block-yellow {
+            border-color: #ffff00;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .block-blue {
+            border-color: #0000ff;
+            background-color: #eff6ff;
+        }
+
+        .score-display-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 5px;
+        }
+
+        .score-info-box {
+            padding: 4px 8px;
+            font-size: 13px;
+            border-radius: 4px;
+            color: white;
+            flex: 1;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .btn-card-toggle {
+            padding: 3px 5px;
+            font-size: 9.5px;
+            background: #333;
+            border: 1px solid #fff;
+            border-radius: 3px;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .btn-card-toggle.active-status {
+            background: #008000 !important;
+            color: #fff !important;
+        }
+
+        .soundboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        .sound-btn {
+            padding: 5px 3px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #800080;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 10.5px;
+            transition: 0.15s;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sound-btn:hover {
+            background: orange !important;
+            background-color: orange !important;
+            color: #000000 !important;
+        }
+
+        .grid-rewards-4col {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 3px;
+            margin-top: 4px;
+        }
+
+        .reward-cell {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            padding: 4px 2px;
+            text-align: center;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            transition: border-color 0.2s;
+        }
+
+        .reward-cell-num {
+            font-size: 9px;
+            font-weight: bold;
+            color: #fbbf24;
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+
+        .reward-cell-val {
+            font-size: 10px;
+            font-weight: bold;
+            color: #ffffff;
+            line-height: 1.1;
+            word-break: break-word;
+        }
+
+        .btn-safe-card {
+            background: #000000;
+            color: #ffffff;
+            border: 1px solid #666;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 4px 5px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.15s;
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn-safe-card.active-safe-card {
+            background: #008000 !important;
+            color: #ffffff !important;
+            border-color: #ffffff;
+        }
+
+        .btn-safe-card:hover {
+            background: orange !important;
+            color: #000000 !important;
+        }
+
+        .sound-btn.stop-btn {
+            background: red !important;
+            grid-column: span 3;
+            font-size: 11px;
+            padding: 6px;
+        }
+
+        .sound-btn.stop-btn:hover {
+            background: orange !important;
+            color: #000000 !important;
+            grid-column: span 3;
+            font-size: 11px;
+            padding: 6px;
+        }
+        /* Items container scrollable */
+        #itemsContainer {
+            max-height: 180px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        /* Scrollbar gọn gàng */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #bbb;
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #888;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div style="display: grid; grid-template-columns: 1fr 1.05fr 1.35fr 1.15fr; gap: 6px; align-items: start; max-width: 100%;">
+        
+        <!-- CỘT 1: TẠO PHÒNG & ĐIỀU KHIỂN NÓN -->
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div class="section">
+                <h2>Tạo mã phòng & mật khẩu</h2>
+                <div class="flex-row">
+                    <button id="btnCreateRoom" onclick="createRoom()" style="background: green; color: #ffffff; width: 100%; padding: 6px;">Tạo phòng mới</button>
+                </div>
+                <div id="roomCreateResult"
+                    style="margin-top: 5px; display: none; padding: 5px; background: #f9f9f9; border-radius: 4px; border: 1px solid #ddd; font-size: 11px;">
+                </div>
+                <div id="currentRoomInfo"
+                    style="margin-top: 5px; display: none; font-size: 11px; line-height: 1.35;"></div>
+                <div id="roomError" style="margin-top: 4px; color: red; font-size: 11px; font-weight: bold;"></div>
+            </div>
+
+            <div class="section">
+                <h2>Set nền vòng quay</h2>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
+                    <button id="btnBg1" onclick="setWheelBackground(1)" style="padding: 6px; font-weight: bold; cursor: pointer; border-radius: 4px;">Nền 1</button>
+                    <button id="btnBg2" onclick="setWheelBackground(2)" style="padding: 6px; font-weight: bold; cursor: pointer; border-radius: 4px;">Nền 2</button>
+                    <button id="btnBg3" onclick="setWheelBackground(3)" style="padding: 6px; font-weight: bold; cursor: pointer; border-radius: 4px;">Nền 3</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Điều khiển Nón</h2>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; margin-bottom: 4px;">
+                    <div class="flex-row" style="gap: 2px;">
+                        <button onclick="toggleWheel('normal', true)" style="flex: 1;">Hiện Nón</button>
+                        <button class="btn-off" onclick="toggleWheel('normal', false)" style="flex: 1;">Ẩn Nón</button>
+                    </div>
+                    <div class="flex-row" style="gap: 2px;">
+                        <button onclick="toggleWheel('wheel_2', true)" style="flex: 1; background: #800080; color: #ffffff;">Hiện Nón 2</button>
+                        <button class="btn-off" onclick="toggleWheel('wheel_2', false)" style="flex: 1;">Ẩn Nón 2</button>
+                    </div>
+                    <div class="flex-row" style="gap: 2px;">
+                        <button onclick="toggleWheel('wheel_3', true)" style="flex: 1; background: #800080; color: #ffffff;">Hiện Nón 3</button>
+                        <button class="btn-off" onclick="toggleWheel('wheel_3', false)" style="flex: 1;">Ẩn Nón 3</button>
+                    </div>
+                    <div class="flex-row" style="gap: 2px;">
+                        <button onclick="toggleWheel('wheel_4', true)" style="flex: 1; background: #800080; color: #ffffff;">Hiện Nón 4</button>
+                        <button class="btn-off" onclick="toggleWheel('wheel_4', false)" style="flex: 1;">Ẩn Nón 4</button>
+                    </div>
+                    <div class="flex-row" style="gap: 2px;">
+                        <button onclick="toggleWheel('special', true)" style="flex: 1;">Hiện Nón ĐB</button>
+                        <button class="btn-off" onclick="toggleWheel('special', false)" style="flex: 1;">Ẩn Nón ĐB</button>
+                    </div>
+                    <div class="flex-row" style="gap: 2px;">
+                        <button onclick="toggleWheel('sub_wheel', true)" style="flex: 1; background-color: #800080; color: #ffffff; font-weight: bold;">Hiện Nón Phụ</button>
+                        <button class="btn-off" onclick="toggleWheel('sub_wheel', false)" style="flex: 1;">Ẩn Nón Phụ</button>
+                    </div>
+                </div>
+                <button onclick="resetWheelRotation()" style="background-color: #800080; color: #ffffff; font-weight: bold; width: 100%; margin-bottom: 5px;">Reset Góc Quay</button>
+                <div class="flex-row">
+                    <label style="font-size: 11px;">TG quay (5-20s):</label>
+                    <input type="number" id="spinTime" min="5" max="20" placeholder="VD: 10" style="width: 55px;">
+                    <button onclick="spinWheel()" style="flex: 1; background: #ff00ff; color: #000000; font-weight: bold;">Quay Nón</button>
+                </div>
+                <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #ccc;">
+                    <div style="font-size: 11px; margin-bottom: 4px; color: #333; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Nhạc quay Nón:</span>
+                        <span id="savedSpinMusicLabel" style="color: #008000;">Đang lưu: None</span>
+                    </div>
+                    <div class="flex-row" style="gap: 6px; margin-bottom: 4px;">
+                        <label style="font-size: 11px; display: inline-flex; align-items: center; gap: 2px; cursor: pointer;"><input type="radio" name="spinMusicOption" value="none" checked> None</label>
+                        <label style="font-size: 11px; display: inline-flex; align-items: center; gap: 2px; cursor: pointer;"><input type="radio" name="spinMusicOption" value="Spin.mp3"> Spin</label>
+                        <label style="font-size: 11px; display: inline-flex; align-items: center; gap: 2px; cursor: pointer;"><input type="radio" name="spinMusicOption" value="final_spin.mp3"> Final</label>
+                        <label style="font-size: 11px; display: inline-flex; align-items: center; gap: 2px; cursor: pointer;"><input type="radio" name="spinMusicOption" value="bonus_spin.mp3"> Bonus</label>
+                    </div>
+                    <button id="btnSetSpinMusic" onclick="setSpinMusicConfig()" style="width: 100%; background: #008000; color: #ffffff; font-weight: bold;">Set</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Soundboard</h2>
+                <div class="soundboard-grid">
+                    <button class="sound-btn" onclick="triggerSound('intro.mp3')">Intro</button>
+                    <button class="sound-btn" onclick="triggerSound('open.mp3')">Open</button>
+                    <button class="sound-btn" onclick="triggerSound('toss_up.mp3')">Toss Up</button>
+                    <button class="sound-btn" onclick="triggerSound('toss_up_solve.mp3')">Toss Solv</button>
+                    <button class="sound-btn" onclick="triggerSound('solve.mp3')">Solve</button>
+                    <button class="sound-btn" onclick="triggerSound('mystery.mp3')">Mystery</button>
+                    <button class="sound-btn" onclick="triggerSound('express_1.mp3')">Express 1</button>
+                    <button class="sound-btn" onclick="triggerSound('express_2.mp3')">Express 2</button>
+                    <button class="sound-btn" onclick="triggerSound('Express 3.mp3')">Express 3</button>
+                    <button class="sound-btn" onclick="triggerSound('Express 4.mp3')">Express 4</button>
+                    <button class="sound-btn" onclick="triggerSound('final_spin_bell.mp3')">Final Bell</button>
+                    <button class="sound-btn" onclick="triggerSound('final_spin.mp3')">Final Spin</button>
+                    <button class="sound-btn" onclick="triggerSound('speed_up.mp3')">Speed up</button>
+                    <button class="sound-btn" onclick="triggerSound('bonus_spin.mp3')">Bonus Spin</button>
+                    <button class="sound-btn" onclick="triggerSound('nghia.mp3')">NGHIA</button>
+                    <button class="sound-btn" onclick="triggerSound('3l.mp3')">3L</button>
+                    <button class="sound-btn" onclick="triggerSound('10s.mp3')">10s</button>
+                    <button class="sound-btn" onclick="triggerSound('bonus_win.mp3')">Bonus Win</button>
+                    <button class="sound-btn" onclick="triggerSound('bonus_lose.mp3')">Bonus Lose</button>
+                    <button class="sound-btn" onclick="triggerSound('bankrupt.mp3')">Bankrupt</button>
+                    <button class="sound-btn" onclick="triggerSound('Closing.mp3')">Closing</button>
+                    <button class="sound-btn stop-btn" onclick="triggerSound('STOP')">⏹ Dừng âm thanh</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Ô Độc đắc</h2>
+                <div id="jackpotDisplayBox" style="padding: 6px 8px; font-size: 13px; text-align: center; background: #800080; color: #ffffff; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">
+                    Độc đắc: 0 đ
+                </div>
+                <div class="flex-row">
+                    <input type="text" id="jackpotInput" placeholder="Nhập điểm" oninput="formatNumberInput(this)" style="flex: 1; min-width: 60px;">
+                    <button onclick="setJackpotValue()" style="background: #0000ff; color: #ffffff; font-weight: bold;">Set</button>
+                    <button onclick="modifyJackpotValue('add')" style="background: green; color: #ffffff; font-weight: bold;">+</button>
+                    <button onclick="modifyJackpotValue('sub')" style="background: red; color: #ffffff; font-weight: bold;">-</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CỘT 2: ĐÈN KIM, ZOOM, LƯỢT & NÚT QUAY -->
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div class="section">
+                <h2>Điều khiển Đèn Kim</h2>
+                <div class="grid-pointer">
+                    <div class="pointer-control" style="background-color: red; color: #ffffff;">
+                        <span>Kim Đỏ:</span>
+                        <div style="display: flex; gap: 2px;">
+                            <button onclick="setPointer('red', 'on')" style="background: green; color: #ffffff;">Mở</button>
+                            <button class="btn-off" onclick="setPointer('red', 'off')">Đóng</button>
+                            <button id="btnTogglePointerRed" onclick="togglePointerVisibility('red')" style="background: #1f2937; color: #ffffff;" title="Ẩn/Hiện Kim Đỏ">Ẩn</button>
+                        </div>
+                    </div>
+                    <div class="pointer-control" style="background-color: #ffff00; color: #000000; font-weight: bold;">
+                        <span>Kim Vàng:</span>
+                        <div>
+                            <button onclick="setPointer('yellow', 'on')" style="background: green; color: #ffffff;">Mở</button>
+                            <button class="btn-off" onclick="setPointer('yellow', 'off')">Đóng</button>
+                        </div>
+                    </div>
+                    <div class="pointer-control" style="background-color: #0000ff; color: #ffffff; font-weight: bold;">
+                        <span>Kim Xanh:</span>
+                        <div style="display: flex; gap: 2px;">
+                            <button onclick="setPointer('blue', 'on')" style="background: green; color: #ffffff;">Mở</button>
+                            <button class="btn-off" onclick="setPointer('blue', 'off')">Đóng</button>
+                            <button id="btnTogglePointerBlue" onclick="togglePointerVisibility('blue')" style="background: #1f2937; color: #ffffff;" title="Ẩn/Hiện Kim Xanh">Ẩn</button>
+                        </div>
+                    </div>
+                    <div class="pointer-control" style="background-color: #4b5563; color: #ffffff;">
+                        <span>Ease Out:</span>
+                        <button onclick="zoomPointer('out')" style="background: #ff00ff; color: #000000; width: 100%; font-weight: bold;">Ease out</button>
+                    </div>
+                </div>
+                <div class="flex-row" style="margin-top: 4px;">
+                    <span style="font-size: 11px;">Zoom/Ease in:</span>
+                    <button onclick="easeTiltSubWheel('red')" style="background: red; color: #ffffff; flex: 1; font-weight: bold;">In Đỏ</button>
+                    <button onclick="zoomPointer('in')" style="background: #ffff00; color: #000000; flex: 1; font-weight: bold;">In Vàng</button>
+                    <button onclick="easeTiltSubWheel('blue')" style="background: #0000ff; color: #ffffff; flex: 1; font-weight: bold;">In Xanh</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Lượt & Nút Quay Người Chơi</h2>
+                <div style="font-size: 11px; margin-bottom: 2px; color: #555;">Bật/Tắt Lượt:</div>
+                <div class="grid-pointer" style="margin-bottom: 4px;">
+                    <div class="pointer-control" style="background-color: red; color: #ffffff;">
+                        <span>Lượt Đỏ:</span>
+                        <div>
+                            <button onclick="setTurn('red', true)" style="background: green; color: #ffffff;">Set</button>
+                            <button class="btn-off" onclick="setTurn('red', false)">Off</button>
+                        </div>
+                    </div>
+                    <div class="pointer-control" style="background-color: #ffff00; color: #000000; font-weight: bold;">
+                        <span>Lượt Vàng:</span>
+                        <div>
+                            <button onclick="setTurn('yellow', true)" style="background: green; color: #ffffff;">Set</button>
+                            <button class="btn-off" onclick="setTurn('yellow', false)">Off</button>
+                        </div>
+                    </div>
+                    <div class="pointer-control" style="background-color: #0000ff; color: #ffffff; font-weight: bold;">
+                        <span>Lượt Xanh:</span>
+                        <div>
+                            <button onclick="setTurn('blue', true)" style="background: green; color: #ffffff;">Set</button>
+                            <button class="btn-off" onclick="setTurn('blue', false)">Off</button>
+                        </div>
+                    </div>
+                    <div class="pointer-control" style="background-color: #333; color: #ffffff;">
+                        <span>Tất cả:</span>
+                        <div>
+                            <button onclick="setTurn('all', true)" style="background: green; color: #ffffff;">Set</button>
+                            <button class="btn-off" onclick="setTurn('all', false)">Off</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="font-size: 11px; margin-bottom: 2px; color: #555;">Khóa/Mở Nút Quay:</div>
+                <div class="grid-pointer">
+                    <div class="pointer-control" style="background-color: red; color: #ffffff;">
+                        <span>Nút Đỏ:</span>
+                        <div>
+                            <button onclick="toggleSpinBtn('red', true)" style="background: green; color: #ffffff;">Mở</button>
+                            <button class="btn-off" onclick="toggleSpinBtn('red', false)">Khóa</button>
+                        </div>
+                    </div>
+                    <div class="pointer-control" style="background-color: #ffff00; color: #000000; font-weight: bold;">
+                        <span>Nút Vàng:</span>
+                        <div>
+                            <button onclick="toggleSpinBtn('yellow', true)" style="background: green; color: #ffffff;">Mở</button>
+                            <button class="btn-off" onclick="toggleSpinBtn('yellow', false)">Khóa</button>
+                        </div>
+                    </div>
+                    <div class="pointer-control" style="background-color: #0000ff; color: #ffffff; font-weight: bold;">
+                        <span>Nút Xanh:</span>
+                        <div>
+                            <button onclick="toggleSpinBtn('blue', true)" style="background: green; color: #ffffff;">Mở</button>
+                            <button class="btn-off" onclick="toggleSpinBtn('blue', false)">Khóa</button>
+                        </div>
+                    </div>
+                    <div class="pointer-control" style="background-color: #333; color: #ffffff;">
+                        <span>Tất cả:</span>
+                        <div>
+                            <button onclick="toggleSpinBtn('all', true)" style="background: green; color: #ffffff;">Mở</button>
+                            <button class="btn-off" onclick="toggleSpinBtn('all', false)">Khóa</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Hiển thị Thẻ & Ô (19 mục)</h2>
+                <div class="grid-4" id="itemsContainer"></div>
+            </div>
+
+            <div class="section">
+                <h2>Ô Ẩn số</h2>
+                <div id="mysteryNumberDisplayBox" style="padding: 6px 8px; font-size: 13px; text-align: center; background: #1a1a1a; color: #ffff00; border: 1px solid #ffff00; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">
+                    Ẩn số: 5.000
+                </div>
+                <div class="flex-row" style="gap: 4px;">
+                    <button onclick="randomMysteryNumber()" style="flex: 1; background: #0000ff; color: #ffffff; font-weight: bold;">Random</button>
+                    <button onclick="setMysteryNumber1000()" style="flex: 1; background: green; color: #ffffff; font-weight: bold;">Set 1.000</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CỘT 3: BẢNG ĐIỀU KHIỂN NGƯỜI CHƠI (ĐỎ, VÀNG, XANH) -->
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div class="section">
+                <h2>Bảng Điều Khiển Người Chơi</h2>
+
+                <!-- NC ĐỎ -->
+                <div class="player-control-block block-red">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                        <span style="color: red; font-size: 13px; font-weight: bold;">NC ĐỎ</span>
+                    </div>
+                    <div class="score-display-row">
+                        <div class="score-info-box" id="ctrl-red-round-box" style="background: red; color: #ffffff; font-weight: bold;">Điểm Vòng: 0</div>
+                        <div class="score-info-box" id="ctrl-red-total-box" style="background: red; color: #ffffff; font-weight: bold;">Điểm Tổng: 0</div>
+                    </div>
+                    <div class="flex-row" style="margin-bottom: 4px; gap: 3px; flex-wrap: wrap;">
+                        <input type="text" id="score-input-red" placeholder="Điểm" oninput="formatNumberInput(this)" style="width: 72px;">
+                        <input type="number" id="freq-input-red" value="1" min="1" placeholder="T.Số" title="Tần số xuất hiện chữ cái" style="width: 44px; text-align: center;">
+                        <button onclick="modifyScore('red', 'round', 'add')" style="background: #ffff00; color: #000000; font-weight: bold; padding: 4px 6px;">Vòng +</button>
+                        <button onclick="modifyScore('red', 'total', 'add')" style="background: #0000ff; color: #ffffff; font-weight: bold; padding: 4px 6px;">Tổng +</button>
+                        <button onclick="modifyScore('red', 'round', 'sub')" style="background: red; color: #ffffff; font-weight: bold; padding: 4px 6px;">Vòng -</button>
+                        <button onclick="clearScoreText('red')" style="background: #4a4a4a; color: #ffffff; font-weight: bold; padding: 4px 6px;" title="Xóa ô điểm">Xóa text</button>
+                    </div>
+                    <div class="flex-row" style="margin-bottom: 4px; gap: 3px; flex-wrap: wrap;">
+                        <button onclick="addRoundToTotal('red')" style="background: #008000; color: #ffffff; font-weight: bold; flex: 1.2; padding: 4px 6px;">Cộng vòng vào tổng</button>
+                        <button onclick="modifyScoreMultiplier('red', 1.5)" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">x1.5</button>
+                        <button onclick="modifyScoreMultiplier('red', 2)" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">x2</button>
+                        <button onclick="modifyScoreMultiplier('red', 0.5)" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">:2</button>
+                        <button onclick="resetPlayerScore('red', 'round')" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">Rs vòng</button>
+                        <button onclick="resetPlayerScore('red', 'total')" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">Rs tổng</button>
+                    </div>
+                    <div class="flex-row" id="cards-row-red" style="gap: 3px;"></div>
+                </div>
+
+                <!-- NC VÀNG -->
+                <div class="player-control-block block-yellow">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                        <span style="color: #ffff00; font-size: 13px; font-weight: bold;">NC VÀNG</span>
+                    </div>
+                    <div class="score-display-row">
+                        <div class="score-info-box" id="ctrl-yellow-round-box" style="background: #ffff00; color: #000000; font-weight: bold;">Điểm Vòng: 0</div>
+                        <div class="score-info-box" id="ctrl-yellow-total-box" style="background: #ffff00; color: #000000; font-weight: bold;">Điểm Tổng: 0</div>
+                    </div>
+                    <div class="flex-row" style="margin-bottom: 4px; gap: 3px; flex-wrap: wrap;">
+                        <input type="text" id="score-input-yellow" placeholder="Điểm" oninput="formatNumberInput(this)" style="width: 72px;">
+                        <input type="number" id="freq-input-yellow" value="1" min="1" placeholder="T.Số" title="Tần số xuất hiện chữ cái" style="width: 44px; text-align: center;">
+                        <button onclick="modifyScore('yellow', 'round', 'add')" style="background: #ffff00; color: #000000; font-weight: bold; padding: 4px 6px;">Vòng +</button>
+                        <button onclick="modifyScore('yellow', 'total', 'add')" style="background: #0000ff; color: #ffffff; font-weight: bold; padding: 4px 6px;">Tổng +</button>
+                        <button onclick="modifyScore('yellow', 'round', 'sub')" style="background: red; color: #ffffff; font-weight: bold; padding: 4px 6px;">Vòng -</button>
+                        <button onclick="clearScoreText('yellow')" style="background: #4a4a4a; color: #ffffff; font-weight: bold; padding: 4px 6px;" title="Xóa ô điểm">Xóa text</button>
+                    </div>
+                    <div class="flex-row" style="margin-bottom: 4px; gap: 3px; flex-wrap: wrap;">
+                        <button onclick="addRoundToTotal('yellow')" style="background: #008000; color: #ffffff; font-weight: bold; flex: 1.2; padding: 4px 6px;">Cộng vòng vào tổng</button>
+                        <button onclick="modifyScoreMultiplier('yellow', 1.5)" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">x1.5</button>
+                        <button onclick="modifyScoreMultiplier('yellow', 2)" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">x2</button>
+                        <button onclick="modifyScoreMultiplier('yellow', 0.5)" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">:2</button>
+                        <button onclick="resetPlayerScore('yellow', 'round')" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">Rs vòng</button>
+                        <button onclick="resetPlayerScore('yellow', 'total')" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">Rs tổng</button>
+                    </div>
+                    <div class="flex-row" id="cards-row-yellow" style="gap: 3px;"></div>
+                </div>
+
+                <!-- NC XANH -->
+                <div class="player-control-block block-blue">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                        <span style="color: #0000ff; font-size: 13px; font-weight: bold;">NC XANH</span>
+                    </div>
+                    <div class="score-display-row">
+                        <div class="score-info-box" id="ctrl-blue-round-box" style="background: #0000ff; color: #ffffff; font-weight: bold;">Điểm Vòng: 0</div>
+                        <div class="score-info-box" id="ctrl-blue-total-box" style="background: #0000ff; color: #ffffff; font-weight: bold;">Điểm Tổng: 0</div>
+                    </div>
+                    <div class="flex-row" style="margin-bottom: 4px; gap: 3px; flex-wrap: wrap;">
+                        <input type="text" id="score-input-blue" placeholder="Điểm" oninput="formatNumberInput(this)" style="width: 72px;">
+                        <input type="number" id="freq-input-blue" value="1" min="1" placeholder="T.Số" title="Tần số xuất hiện chữ cái" style="width: 44px; text-align: center;">
+                        <button onclick="modifyScore('blue', 'round', 'add')" style="background: #ffff00; color: #000000; font-weight: bold; padding: 4px 6px;">Vòng +</button>
+                        <button onclick="modifyScore('blue', 'total', 'add')" style="background: #0000ff; color: #ffffff; font-weight: bold; padding: 4px 6px;">Tổng +</button>
+                        <button onclick="modifyScore('blue', 'round', 'sub')" style="background: red; color: #ffffff; font-weight: bold; padding: 4px 6px;">Vòng -</button>
+                        <button onclick="clearScoreText('blue')" style="background: #4a4a4a; color: #ffffff; font-weight: bold; padding: 4px 6px;" title="Xóa ô điểm">Xóa text</button>
+                    </div>
+                    <div class="flex-row" style="margin-bottom: 4px; gap: 3px; flex-wrap: wrap;">
+                        <button onclick="addRoundToTotal('blue')" style="background: #008000; color: #ffffff; font-weight: bold; flex: 1.2; padding: 4px 6px;">Cộng vòng vào tổng</button>
+                        <button onclick="modifyScoreMultiplier('blue', 1.5)" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">x1.5</button>
+                        <button onclick="modifyScoreMultiplier('blue', 2)" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">x2</button>
+                        <button onclick="modifyScoreMultiplier('blue', 0.5)" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">:2</button>
+                        <button onclick="resetPlayerScore('blue', 'round')" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">Rs vòng</button>
+                        <button onclick="resetPlayerScore('blue', 'total')" style="background: #800080; color: #ffffff; font-weight: bold; padding: 4px 6px;">Rs tổng</button>
+                    </div>
+                    <div class="flex-row" id="cards-row-blue" style="gap: 3px;"></div>
+                </div>
+
+                <div class="flex-row" style="margin-top: 6px; border-top: 1px dashed #ccc; padding-top: 6px; justify-content: center; gap: 8px;">
+                    <button onclick="resetAllScores('round')" style="background: #800080; color: #ffffff; font-weight: bold; font-size: 11px; padding: 6px 12px;">Reset điểm vòng cả 3</button>
+                    <button onclick="resetAllScores('total')" style="background: #800080; color: #ffffff; font-weight: bold; font-size: 11px; padding: 6px 12px;">Reset điểm tổng cả 3</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Ô Két sắt</h2>
+                <div id="safeDisplayBox" style="padding: 6px 8px; font-size: 13px; text-align: center; background: #000000; color: #ffffff; border: 1px solid #ffffff; border-radius: 4px; font-weight: bold; margin-bottom: 5px;">
+                    Két sắt: 0 đ
+                </div>
+                <div class="flex-row" style="margin-bottom: 5px;">
+                    <input type="text" id="safeInput" placeholder="Nhập điểm" oninput="formatNumberInput(this)" style="flex: 1; min-width: 60px;">
+                    <button onclick="setSafeValue()" style="background: #0000ff; color: #ffffff; font-weight: bold;">Set</button>
+                    <button onclick="modifySafeValue('add')" style="background: green; color: #ffffff; font-weight: bold;">+</button>
+                    <button onclick="modifySafeValue('sub')" style="background: red; color: #ffffff; font-weight: bold;">-</button>
+                </div>
+                <div style="font-size: 11px; margin-bottom: 3px; color: #555;">Các thẻ Két sắt:</div>
+                <div class="flex-row" style="gap: 3px; flex-wrap: wrap;" id="safeCardsRow">
+                    <button id="btn-safe-card-0" class="btn-safe-card" onclick="toggleSafeCard(0)">Thẻ 1/2 thứ 1</button>
+                    <button id="btn-safe-card-1" class="btn-safe-card" onclick="toggleSafeCard(1)">Thẻ 1/2 thứ 2</button>
+                    <button id="btn-safe-card-2" class="btn-safe-card" onclick="toggleSafeCard(2)">Thẻ Cơ hội</button>
+                    <button id="btn-safe-card-3" class="btn-safe-card" onclick="toggleSafeCard(3)">Thẻ nhân đôi</button>
+                    <button id="btn-safe-card-4" class="btn-safe-card" onclick="toggleSafeCard(4)">Ô 1 Triệu</button>
+                    <button id="btn-safe-card-5" class="btn-safe-card" onclick="toggleSafeCard(5)">Thẻ May mắn</button>
+                    <button id="btn-safe-card-6" class="btn-safe-card" onclick="toggleSafeCard(6)">Thẻ May rủi</button>
+                    <button id="btn-safe-card-7" class="btn-safe-card" onclick="toggleSafeCard(7)">Thẻ Tích điểm</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CỘT 4: NÓN PHỤ & NÓN ĐẶC BIỆT & Ô BÍ MẬT -->
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div class="section">
+                <h2>Điều khiển Nón Phụ</h2>
+                <div class="flex-row" style="gap: 3px;">
+                    <button onclick="shuffleSubWheel()" style="background: #0000ff; color: #ffffff; font-weight: bold; flex: 1;">Xáo nón phụ</button>
+                    <button onclick="showValue()" style="background: green; color: #ffffff; font-weight: bold; flex: 1;">Hiện giá trị</button>
+                    <button onclick="findHighestWedge()" style="background: red; color: #ffffff; font-weight: bold; flex: 1;">Tìm cao nhất</button>
+                    <button onclick="hideValue()" style="background: #ffff00; color: #000000; font-weight: bold; flex: 1;">Ẩn giá trị</button>
+                </div>
+                <div style="margin-top: 5px; font-size: 11px; color: #444;">Sơ đồ 24 ô Nón Phụ:</div>
+                <div class="grid-6x4" id="subGridContainer"></div>
+            </div>
+
+            <div class="section">
+                <h2>Điều khiển Nón Đặc Biệt</h2>
+                <div class="flex-row" style="gap: 4px; margin-bottom: 4px;">
+                    <label style="font-size: 11px;"><input type="radio" name="specialPrize" value="100000" checked> 100k</label>
+                    <label style="font-size: 11px;"><input type="radio" name="specialPrize" value="1000000"> 1M</label>
+                    <label style="font-size: 11px;"><input type="radio" name="specialPrize" value="he_so"> Hệ số</label>
+                </div>
+                <div class="flex-row" style="gap: 3px;">
+                    <button onclick="shuffleSpecialWheel()" style="background: #0000ff; color: #ffffff; font-weight: bold; flex: 1;">Xáo Đặc Biệt</button>
+                    <button onclick="showValue()" style="background: green; color: #ffffff; font-weight: bold; flex: 1;">Hiện giá trị</button>
+                    <button onclick="findHighestWedge()" style="background: red; color: #ffffff; font-weight: bold; flex: 1;">Tìm cao nhất</button>
+                    <button onclick="hideValue()" style="background: #ffff00; color: #000000; font-weight: bold; flex: 1;">Ẩn giá trị</button>
+                </div>
+                <div style="margin-top: 5px; font-size: 11px; color: #444;">Sơ đồ 24 ô Nón Đặc Biệt:</div>
+                <div class="grid-6x4" id="specialGridContainer"></div>
+            </div>
+
+            <div class="section">
+                <h2>Ô Bí Mật</h2>
+                <!-- Hàng 1: 2 ô chứa Đỏ BM Cam và Vàng BM Trắng -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 4px;">
+                    <div style="padding: 6px 4px; text-align: center; border-radius: 4px; background: red; color: #ffffff; font-weight: bold; font-size: 11px; border: 1px solid #ff9900;">
+                        Đỏ BM Cam
+                    </div>
+                    <div style="padding: 6px 4px; text-align: center; border-radius: 4px; background: #ffff00; color: #000000; font-weight: bold; font-size: 11px; border: 1px solid #ffffff;">
+                        Vàng BM Trắng
+                    </div>
+                </div>
+                <!-- Hàng 2: Giá trị của 2 ô đó -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px;">
+                    <div id="secretBoxVal1" style="padding: 6px 4px; text-align: center; border-radius: 4px; background: #1a1a1a; color: #ffff00; font-weight: bold; font-size: 12px; border: 1px solid #666;">
+                        10.000
+                    </div>
+                    <div id="secretBoxVal2" style="padding: 6px 4px; text-align: center; border-radius: 4px; background: #1a1a1a; color: #ffffff; font-weight: bold; font-size: 12px; border: 1px solid #666;">
+                        Mất điểm
+                    </div>
+                </div>
+                <!-- Hàng 3: 2 nút Ẩn/Hiện, Random -->
+                <div class="flex-row" style="gap: 4px;">
+                    <button onclick="toggleSecretBoxesVisibility()" style="flex: 1; background: #800080; color: #ffffff; font-weight: bold;" id="btnToggleSecret">Ẩn/Hiện</button>
+                    <button onclick="randomSecretBoxes()" style="flex: 1; background: #0000ff; color: #ffffff; font-weight: bold;">Random</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Phần thưởng</h2>
+                <div class="flex-row" style="margin-bottom: 5px;">
+                    <button onclick="randomRewards()" style="flex: 1; background: #0000ff; color: #ffffff; font-weight: bold; padding: 6px 10px;">🎲 Random</button>
+                </div>
+                <div style="font-size: 11px; margin-bottom: 3px; color: #444;">Bảng 24 ô (6 hàng x 4 cột):</div>
+                <div class="grid-rewards-4col" id="rewardsGridContainer"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        var supabaseUrl = 'https://vjwwbzjzcbtkksehwfll.supabase.co';
+        var supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqd3diemp6Y2J0a2tzZWh3ZmxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NDIyOTYsImV4cCI6MjA5NTUxODI5Nn0.Zcn4hvlLtRirM-SPGrFvu3ivu8RYF9WngvbxCMCGfh4';
+        var supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let roomId = urlParams.get('roomid');
+        let channel = null;
+
+        let globalTurns = { red: false, yellow: false, blue: false };
+        let globalSpinButtons = { red: false, yellow: false, blue: false };
+        let globalPointerLights = { red: 'off', yellow: 'off', blue: 'off' };
+        let globalPointerVisibility = { red: true, blue: true };
+        let savedSpinMusic = 'none';
+
+        const spinMusicLabels = {
+            'none': 'None',
+            'Spin.mp3': 'Spin',
+            'final_spin.mp3': 'Final',
+            'bonus_spin.mp3': 'Bonus'
+        };
+
+        function updatePointerVisibilityButtonsUI() {
+            const btnRed = document.getElementById('btnTogglePointerRed');
+            const btnBlue = document.getElementById('btnTogglePointerBlue');
+            if (btnRed) {
+                const isVis = globalPointerVisibility.red !== false;
+                btnRed.innerText = isVis ? 'Ẩn' : 'Hiện';
+                btnRed.style.background = isVis ? '#1f2937' : '#f59e0b';
+                btnRed.style.color = isVis ? '#ffffff' : '#000000';
+            }
+            if (btnBlue) {
+                const isVis = globalPointerVisibility.blue !== false;
+                btnBlue.innerText = isVis ? 'Ẩn' : 'Hiện';
+                btnBlue.style.background = isVis ? '#1f2937' : '#f59e0b';
+                btnBlue.style.color = isVis ? '#ffffff' : '#000000';
+            }
+        }
+
+        function updateSpinMusicUI() {
+            const radios = document.querySelectorAll('input[name="spinMusicOption"]');
+            radios.forEach(r => {
+                r.checked = (r.value === savedSpinMusic);
+            });
+            const labelEl = document.getElementById('savedSpinMusicLabel');
+            if (labelEl) {
+                labelEl.innerText = 'Đang lưu: ' + (spinMusicLabels[savedSpinMusic] || 'None');
+            }
+        }
+
+        let currentWheelBgIndex = 1;
+
+        function updateBgButtonsUI(idx) {
+            for (let i = 1; i <= 3; i++) {
+                const btn = document.getElementById('btnBg' + i);
+                if (btn) {
+                    if (i === idx) {
+                        btn.style.background = '#ffff00';
+                        btn.style.color = '#000000';
+                        btn.style.border = '2px solid #e11d48';
+                        btn.style.boxShadow = '0 0 6px rgba(255, 255, 0, 0.9)';
+                    } else {
+                        btn.style.background = '#f1f5f9';
+                        btn.style.color = '#334155';
+                        btn.style.border = '1px solid #cbd5e1';
+                        btn.style.boxShadow = 'none';
+                    }
+                }
+            }
+        }
+
+        function setWheelBackground(idx) {
+            currentWheelBgIndex = idx;
+            updateBgButtonsUI(idx);
+            localStorage.setItem('wheel_bg', idx);
+
+            try {
+                if (window.BroadcastChannel) {
+                    const bc = new BroadcastChannel('wheel_bg_channel');
+                    bc.postMessage({ bgIndex: idx, bgUrl: './Nền ' + idx + '.jpg' });
+                    bc.close();
+                }
+            } catch (e) {}
+
+            if (roomId && channel) {
+                sendEvent('set_background', { bgIndex: idx, bgUrl: './Nền ' + idx + '.jpg' });
+                updateWheelStateFields({ backgroundIndex: idx, backgroundUrl: './Nền ' + idx + '.jpg' });
+            }
+        }
+
+        function setControllerActive(isActive) {
+            const allButtons = document.querySelectorAll('button');
+            allButtons.forEach(btn => {
+                if (btn.id !== 'btnCreateRoom' && btn.id !== 'btnBg1' && btn.id !== 'btnBg2' && btn.id !== 'btnBg3') {
+                    btn.disabled = !isActive;
+                }
+            });
+            const allInputs = document.querySelectorAll('input');
+            allInputs.forEach(input => {
+                input.disabled = !isActive;
+            });
+            const allSelects = document.querySelectorAll('select');
+            allSelects.forEach(sel => {
+                sel.disabled = !isActive;
+            });
+        }
+
+        function generateDigits(length) {
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += Math.floor(Math.random() * 10).toString();
+            }
+            return result;
+        }
+
+        function showRoomError(msg) {
+            document.getElementById('roomError').innerText = msg || '';
+        }
+
+        function renderCurrentRoomInfo(info) {
+            const el = document.getElementById('currentRoomInfo');
+            if (!info || !info.room_id) {
+                el.style.display = 'block';
+                el.className = 'room-alert-inactive';
+                el.innerHTML = '<strong>⚠️ Chưa tạo phòng.</strong><br>Tất cả các nút điều khiển đang bị khóa. Hãy bấm <strong>"Tạo phòng mới"</strong> ở trên để bắt đầu.';
+                return;
+            }
+            const rid = info.room_id;
+            el.style.display = 'block';
+            el.className = 'room-alert-active';
+            el.innerHTML =
+                '<strong>✅ Phòng hiện tại:</strong> <span style="font-size: 12px; color: #047857;">' + rid + '</span><br>' +
+                'P1 (Đỏ): <strong>' + info.p1_pass + '</strong> | ' +
+                'P2 (Vàng): <strong>' + info.p2_pass + '</strong> | ' +
+                'P3 (Xanh): <strong>' + info.p3_pass + '</strong><br>' +
+                '<div style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px;">' +
+                '<a href="Wheel.html?roomid=' + rid + '" target="_blank" style="background:#16a34a; color:#fff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">🎡 Wheel</a>' +
+                '<a href="Sub_Wheel.html?roomid=' + rid + '" target="_blank" style="background:#9333ea; color:#fff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">🔄 Sub_Wheel</a>' +
+                '<a href="Player1.html?roomid=' + rid + '&auth=' + info.p1_pass + '" target="_blank" style="background:red; color:#fff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">👤 P1 (Đỏ)</a>' +
+                '<a href="Player2.html?roomid=' + rid + '&auth=' + info.p2_pass + '" target="_blank" style="background:#ffff00; color:#000; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">👤 P2 (Vàng)</a>' +
+                '<a href="Player3.html?roomid=' + rid + '&auth=' + info.p3_pass + '" target="_blank" style="background:#0000ff; color:#fff; padding:3px 6px; border-radius:3px; text-decoration:none; font-size:10.5px;">👤 P3 (Xanh)</a>' +
+                '</div>';
+        }
+
+        async function loadRoomInfo() {
+            if (!roomId) {
+                renderCurrentRoomInfo(null);
+                setControllerActive(false);
+                return;
+            }
+            const { data, error } = await supabase
+                .from('game_rooms')
+                .select('room_id, p1_pass, p2_pass, p3_pass')
+                .eq('room_id', roomId)
+                .single();
+
+            if (error || !data) {
+                showRoomError('Không tìm thấy thông tin phòng! Vui lòng tạo phòng mới.');
+                renderCurrentRoomInfo(null);
+                setControllerActive(false);
+                return;
+            }
+            showRoomError('');
+            renderCurrentRoomInfo(data);
+            setControllerActive(true);
+        }
+
+        async function createRoom() {
+            showRoomError('');
+            const newRoomId = generateDigits(6);
+            const p1 = generateDigits(4);
+            const p2 = generateDigits(4);
+            const p3 = generateDigits(4);
+
+            const { error: roomError } = await supabase.from('game_rooms').insert({
+                room_id: newRoomId,
+                p1_pass: p1,
+                p2_pass: p2,
+                p3_pass: p3
+            });
+
+            if (roomError) {
+                showRoomError('Không thể tạo phòng: ' + roomError.message);
+                return;
+            }
+
+            const defaultScores = {
+                redRound: 0, redTotal: 0,
+                yellowRound: 0, yellowTotal: 0,
+                blueRound: 0, blueTotal: 0
+            };
+            const defaultCards = {
+                red: Array(14).fill(false),
+                yellow: Array(14).fill(false),
+                blue: Array(14).fill(false)
+            };
+
+            const defaultInitialWheelState = {
+                currentRotation: 270,
+                isSpecialMode: false,
+                activeWheelType: 'normal',
+                specialWedges: [],
+                wheelDisplay: 'block',
+                wheelBg: "url('./Nón.png')",
+                zoomed: false,
+                subWheelTilt: 'none',
+                popupDisplay: 'none',
+                popupText: '0 điểm',
+                itemsState: {},
+                itemAngles: Object.assign({}, globalItemAngles),
+                turns: { red: false, yellow: false, blue: false },
+                spinButtons: { red: false, yellow: false, blue: false },
+                pointerLights: { red: 'off', yellow: 'off', blue: 'off' },
+                pointerVisibility: { red: true, blue: true },
+                spinMusic: 'none',
+                backgroundIndex: currentWheelBgIndex,
+                backgroundUrl: './Nền ' + currentWheelBgIndex + '.jpg',
+                custom_game_data: {
+                    jackpotScore: 0,
+                    currentMysteryNumber: "5.000",
+                    mysteryRevealed: false,
+                    safeScore: 0,
+                    safeCardsState: Array(8).fill(false),
+                    secretBox1: "10.000",
+                    secretBox2: "Mất điểm",
+                    secretBoxesHidden: false,
+                    rewardBoxes: [...rewardItemsPool]
+                }
+            };
+
+            await supabase.from('game_room_state').insert({
+                room_id: newRoomId,
+                wheel_state: defaultInitialWheelState,
+                scores: defaultScores,
+                player_cards: defaultCards,
+                controller_rotation: 270
+            });
+
+            controllerWheelState = Object.assign({}, defaultInitialWheelState);
+
+            roomId = newRoomId;
+            history.replaceState(null, '', 'Controller.html?roomid=' + newRoomId);
+
+            document.getElementById('roomCreateResult').style.display = 'none';
+            showRoomError('');
+            renderCurrentRoomInfo({
+                room_id: newRoomId,
+                p1_pass: p1,
+                p2_pass: p2,
+                p3_pass: p3
+            });
+
+            initChannel();
+            setControllerActive(true);
+            await loadRoomState();
+            syncScoresToWheel(false);
+        }
+
+        let controllerWheelState = {};
+        let wheelStateWriteChain = Promise.resolve();
+
+        function normalizeAngle(deg) {
+            return ((deg % 360) + 360) % 360;
+        }
+
+        function updateWheelStateFields(updates) {
+            if (!roomId) return Promise.resolve();
+            controllerWheelState = Object.assign({}, controllerWheelState, updates);
+
+            wheelStateWriteChain = wheelStateWriteChain.then(async () => {
+                try {
+                    const { data } = await supabase
+                        .from('game_room_state')
+                        .select('wheel_state')
+                        .eq('room_id', roomId)
+                        .single();
+
+                    let currentState = {};
+                    if (data && data.wheel_state) {
+                        currentState = data.wheel_state;
+                    }
+
+                    const newState = Object.assign({}, currentState, controllerWheelState, updates);
+                    controllerWheelState = Object.assign({}, newState);
+
+                    await supabase
+                        .from('game_room_state')
+                        .update({ wheel_state: newState, updated_at: new Date().toISOString() })
+                        .eq('room_id', roomId);
+                } catch (e) {
+                    console.error('updateWheelStateFields error:', e);
+                }
+            });
+
+            return wheelStateWriteChain;
+        }
+
+        async function loadRoomState() {
+            if (!roomId) return;
+            const { data, error } = await supabase
+                .from('game_room_state')
+                .select('*')
+                .eq('room_id', roomId)
+                .single();
+
+            if (error || !data) return;
+
+            if (data.scores) {
+                globalScores = Object.assign(globalScores, data.scores);
+            }
+            if (data.player_cards) {
+                playerCardsState = Object.assign(playerCardsState, data.player_cards);
+                ['red', 'yellow', 'blue'].forEach(function (color) {
+                    if (playerCardsState[color]) {
+                        while (playerCardsState[color].length < 14) {
+                            playerCardsState[color].push(false);
+                        }
+                        playerCardsState[color].forEach(function (isActive, idx) {
+                            const btn = document.getElementById('btn-card-' + color + '-' + idx);
+                            if (btn) {
+                                if (isActive) btn.classList.add('active-status');
+                                else btn.classList.remove('active-status');
+                            }
+                        });
+                    }
+                });
+            }
+            if (data.wheel_state && data.wheel_state.currentRotation !== undefined && data.wheel_state.currentRotation !== null) {
+                currentRotation = parseFloat(data.wheel_state.currentRotation);
+            } else if (data.controller_rotation !== undefined && data.controller_rotation !== null) {
+                currentRotation = parseFloat(data.controller_rotation);
+            }
+
+            if (data.wheel_state) {
+                controllerWheelState = Object.assign({}, data.wheel_state);
+                if (data.wheel_state.turns) {
+                    globalTurns = Object.assign(globalTurns, data.wheel_state.turns);
+                }
+                if (data.wheel_state.spinButtons) {
+                    globalSpinButtons = Object.assign(globalSpinButtons, data.wheel_state.spinButtons);
+                }
+                if (data.wheel_state.pointerLights) {
+                    globalPointerLights = Object.assign(globalPointerLights, data.wheel_state.pointerLights);
+                }
+                if (data.wheel_state.pointerVisibility) {
+                    globalPointerVisibility = Object.assign(globalPointerVisibility, data.wheel_state.pointerVisibility);
+                    updatePointerVisibilityButtonsUI();
+                }
+                if (data.wheel_state.spinMusic !== undefined) {
+                    savedSpinMusic = data.wheel_state.spinMusic;
+                    updateSpinMusicUI();
+                }
+                if (data.wheel_state.backgroundIndex) {
+                    currentWheelBgIndex = data.wheel_state.backgroundIndex;
+                    updateBgButtonsUI(currentWheelBgIndex);
+                }
+                if (data.wheel_state.itemsState) {
+                    globalItemsState = Object.assign(globalItemsState, data.wheel_state.itemsState);
+                }
+                if (data.wheel_state.itemAngles) {
+                    globalItemAngles = Object.assign(globalItemAngles, data.wheel_state.itemAngles);
+                }
+                updateItemsUI();
+                if (data.wheel_state.specialWedges && Array.isArray(data.wheel_state.specialWedges)) {
+                    currentSpecialWedges = data.wheel_state.specialWedges;
+                    if (data.wheel_state.activeWheelType === 'sub_wheel' && currentSpecialWedges.length === 24) {
+                        renderSubGrid(currentSpecialWedges);
+                    } else if (data.wheel_state.activeWheelType === 'special' && currentSpecialWedges.length === 24) {
+                        renderGrid(currentSpecialWedges);
+                    }
+                }
+                if (data.wheel_state.custom_game_data) {
+                    const c = data.wheel_state.custom_game_data;
+                    if (c.jackpotScore !== undefined) jackpotScore = c.jackpotScore;
+                    if (c.currentMysteryNumber !== undefined) currentMysteryNumber = c.currentMysteryNumber;
+                    if (c.mysteryRevealed !== undefined) mysteryRevealed = c.mysteryRevealed;
+                    if (c.safeScore !== undefined) safeScore = c.safeScore;
+                    if (c.safeCardsState !== undefined && Array.isArray(c.safeCardsState)) {
+                        safeCardsState = [...c.safeCardsState];
+                        while (safeCardsState.length < 8) safeCardsState.push(false);
+                    }
+                    if (c.secretBox1 !== undefined) secretBox1 = c.secretBox1;
+                    if (c.secretBox2 !== undefined) secretBox2 = c.secretBox2;
+                    if (c.secretBoxesHidden !== undefined) secretBoxesHidden = c.secretBoxesHidden;
+                    if (c.rewardBoxes && Array.isArray(c.rewardBoxes) && c.rewardBoxes.length === 24) {
+                        rewardBoxesState = [...c.rewardBoxes];
+                    }
+                    updateJackpotDisplay();
+                    updateMysteryNumberDisplay();
+                    updateSafeDisplay();
+                    updateSecretBoxesDisplay();
+                    renderRewardsGrid();
+                }
+            }
+            syncScoresToWheel(false);
+            if (roomId && channel) {
+                const customData = {
+                    jackpotScore, currentMysteryNumber, mysteryRevealed, safeScore, safeCardsState, secretBox1, secretBox2, secretBoxesHidden, rewardBoxes: rewardBoxesState
+                };
+                sendEvent('sync_custom_data', customData);
+            }
+        }
+
+        async function syncRotationFromWheel() {
+            if (!roomId) return;
+            const { data } = await supabase
+                .from('game_room_state')
+                .select('wheel_state')
+                .eq('room_id', roomId)
+                .single();
+            if (data && data.wheel_state && data.wheel_state.currentRotation !== undefined && data.wheel_state.currentRotation !== null) {
+                currentRotation = parseFloat(data.wheel_state.currentRotation);
+            }
+        }
+
+        async function saveRoomState(extraWheelUpdates) {
+            if (!roomId) return;
+            const customData = {
+                jackpotScore, currentMysteryNumber, mysteryRevealed, safeScore, safeCardsState, secretBox1, secretBox2, secretBoxesHidden, rewardBoxes: rewardBoxesState
+            };
+            const wheelUpdates = Object.assign({ custom_game_data: customData }, extraWheelUpdates || {});
+            updateWheelStateFields(wheelUpdates);
+            sendEvent('sync_custom_data', customData);
+            await supabase.from('game_room_state').update({
+                scores: globalScores,
+                player_cards: playerCardsState,
+                controller_rotation: currentRotation,
+                updated_at: new Date().toISOString()
+            }).eq('room_id', roomId);
+        }
+
+        const MIN_SPIN_ROTATIONS = 5;
+
+        function computeSpinTarget(startRot, duration, randomOffset, minRotations) {
+            const minRot = (minRotations || MIN_SPIN_ROTATIONS) * 360;
+            let finalDuration = parseFloat(duration);
+            if (isNaN(finalDuration) || finalDuration <= 0) finalDuration = 5;
+            const durationRot = finalDuration * 360;
+            const totalExtra = Math.max(minRot, durationRot) + (randomOffset || 0);
+            const start = parseFloat(startRot);
+            return { startRot: start, targetRot: start + totalExtra, finalDuration: finalDuration };
+        }
+
+        function updateControllerRotationFromSpin(payload) {
+            if (!payload || payload.startRot === undefined || payload.startRot === null) return;
+            const spin = computeSpinTarget(payload.startRot, payload.duration, payload.randomOffset, payload.minRotations);
+            currentRotation = normalizeAngle(spin.targetRot);
+            const updates = { currentRotation: currentRotation, popupDisplay: 'none' };
+            if (payload.playerColor && ['red', 'yellow', 'blue'].includes(payload.playerColor)) {
+                globalSpinButtons[payload.playerColor] = false;
+                updates.spinButtons = Object.assign({}, globalSpinButtons);
+            }
+            updateWheelStateFields(updates);
+        }
+
+        function buildAuthoritativeWheelSyncPayload() {
+            const customData = {
+                jackpotScore, currentMysteryNumber, mysteryRevealed, safeScore, safeCardsState, secretBox1, secretBox2, secretBoxesHidden, rewardBoxes: rewardBoxesState
+            };
+            const merged = Object.assign({}, controllerWheelState, {
+                currentRotation: currentRotation,
+                turns: Object.assign({}, globalTurns),
+                spinButtons: Object.assign({}, globalSpinButtons),
+                pointerLights: Object.assign({}, globalPointerLights),
+                pointerVisibility: Object.assign({}, globalPointerVisibility),
+                spinMusic: savedSpinMusic,
+                backgroundIndex: currentWheelBgIndex,
+                backgroundUrl: './Nền ' + currentWheelBgIndex + '.jpg',
+                itemsState: Object.assign({}, globalItemsState),
+                itemAngles: Object.assign({}, globalItemAngles),
+                custom_game_data: customData
+            });
+            delete merged.popupDisplay;
+            delete merged.popupText;
+            return merged;
+        }
+
+        function initChannel() {
+            if (!roomId || channel) return;
+            channel = supabase.channel('wheel_room_' + roomId, {
+                config: { broadcast: { self: true } }
+            });
+            channel.on('broadcast', { event: 'spin_wheel' }, function (payload) {
+                updateControllerRotationFromSpin(payload.payload);
+            }).on('broadcast', { event: 'reset_rotation' }, function () {
+                currentRotation = 270;
+                updateWheelStateFields({ currentRotation: 270, popupDisplay: 'none' });
+            }).on('broadcast', { event: 'find_highest' }, function (payload) {
+                if (payload.payload && payload.payload.targetRot !== undefined && payload.payload.targetRot !== null) {
+                    currentRotation = normalizeAngle(parseFloat(payload.payload.targetRot));
+                    updateWheelStateFields({ currentRotation: currentRotation });
+                }
+            }).on('broadcast', { event: 'request_sync' }, function () {
+                syncScoresToWheel(false);
+                if (roomId) {
+                    const customData = {
+                        jackpotScore, currentMysteryNumber, mysteryRevealed, safeScore, safeCardsState, secretBox1, secretBox2, secretBoxesHidden, rewardBoxes: rewardBoxesState
+                    };
+                    sendEvent('sync_player_cards', playerCardsState);
+                    sendEvent('sync_custom_data', customData);
+                    sendEvent('set_background', { bgIndex: currentWheelBgIndex, bgUrl: './Nền ' + currentWheelBgIndex + '.jpg' });
+                    sendEvent('set_spin_music', { spinMusic: savedSpinMusic });
+                    sendEvent('pointer_visibility', { pointerName: 'red', visible: globalPointerVisibility.red !== false });
+                    sendEvent('pointer_visibility', { pointerName: 'blue', visible: globalPointerVisibility.blue !== false });
+                    sendEvent('full_wheel_sync', {
+                        wheelState: buildAuthoritativeWheelSyncPayload(),
+                        scores: globalScores,
+                        playerCards: playerCardsState
+                    });
+                }
+            });
+            channel.subscribe();
+        }
+
+        function sendEvent(eventName, payloadData) {
+            if (!roomId || !channel) {
+                showRoomError('Vui lòng chọn phòng trước khi điều khiển!');
+                return;
+            }
+            channel.send({
+                type: 'broadcast',
+                event: eventName,
+                payload: payloadData
+            });
+        }
+
+        let currentRotation = 270;
+
+        let globalItemsState = {};
+        let globalItemAngles = {};
+
+        function toggleWheel(type, isShow) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            sendEvent('toggle_wheel', { type, isShow });
+
+            let bg = "url('./Nón.png')";
+            let isSpecial = false;
+            if (type === 'special') {
+                bg = "url('./Nón Đặc Biệt.png')";
+                isSpecial = true;
+            } else if (type === 'sub_wheel') {
+                bg = "url('./Nón Phụ.png')";
+                isSpecial = true;
+            } else if (type === 'wheel_2') {
+                bg = "url('./Nón 2.png')";
+            } else if (type === 'wheel_3') {
+                bg = "url('./Nón 3.png')";
+            } else if (type === 'wheel_4') {
+                bg = "url('./Nón 4.png')";
+            }
+            const updates = {
+                wheelDisplay: isShow ? 'block' : 'none'
+            };
+            if (isShow) {
+                updates.wheelBg = bg;
+                updates.isSpecialMode = isSpecial;
+                updates.activeWheelType = type;
+                if (!isSpecial) {
+                    updates.popupDisplay = 'none';
+                }
+            }
+            updateWheelStateFields(updates);
+        }
+
+        async function spinWheel() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            await syncRotationFromWheel();
+
+            const timeInput = document.getElementById('spinTime').value;
+            let duration = parseInt(timeInput);
+            if (isNaN(duration) || duration < 5 || duration > 20) {
+                duration = Math.floor(Math.random() * (20 - 5 + 1)) + 5;
+                document.getElementById('spinTime').value = duration;
+            }
+
+            const startRot = currentRotation;
+            const randomOffset = Math.floor(Math.random() * 3601);
+            const startTime = Date.now();
+            const spin = computeSpinTarget(startRot, duration, randomOffset, MIN_SPIN_ROTATIONS);
+
+            currentRotation = normalizeAngle(spin.targetRot);
+
+            sendEvent('spin_wheel', {
+                duration: spin.finalDuration,
+                randomOffset: randomOffset,
+                startTime: startTime,
+                startRot: startRot,
+                minRotations: MIN_SPIN_ROTATIONS,
+                spinMusic: savedSpinMusic
+            });
+            updateWheelStateFields({ currentRotation: currentRotation, popupDisplay: 'none' });
+        }
+
+        function setSpinMusicConfig() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const selected = document.querySelector('input[name="spinMusicOption"]:checked');
+            savedSpinMusic = selected ? selected.value : 'none';
+            updateSpinMusicUI();
+            sendEvent('set_spin_music', { spinMusic: savedSpinMusic });
+            updateWheelStateFields({ spinMusic: savedSpinMusic });
+        }
+
+        function setPointer(pointerName, state) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            sendEvent('pointer_light', { pointerName, state });
+            globalPointerLights[pointerName] = state;
+            updateWheelStateFields({ pointerLights: Object.assign({}, globalPointerLights) });
+        }
+
+        function togglePointerVisibility(pointerName) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const nextVisible = !(globalPointerVisibility[pointerName] !== false);
+            globalPointerVisibility[pointerName] = nextVisible;
+            updatePointerVisibilityButtonsUI();
+            sendEvent('pointer_visibility', { pointerName, visible: nextVisible });
+            updateWheelStateFields({ pointerVisibility: Object.assign({}, globalPointerVisibility) });
+        }
+
+        function zoomPointer(type) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            try {
+                if (window.BroadcastChannel) {
+                    const bc = new BroadcastChannel('wheel_zoom_channel');
+                    bc.postMessage({ event: 'zoom_pointer', type: type });
+                    bc.close();
+                }
+            } catch (e) {}
+            if (type === 'out') {
+                // Ease out: Về góc thẳng và bỏ Zoom
+                sendEvent('zoom_pointer', { type: 'out' });
+                updateWheelStateFields({ zoomed: false, subWheelTilt: 'none' });
+            } else if (type === 'in') {
+                // Ease in Vàng: Giữ Zoom và đưa về góc thẳng
+                sendEvent('zoom_pointer', { type: 'in' });
+                updateWheelStateFields({ zoomed: true, subWheelTilt: 'none' });
+            }
+        }
+
+        function toggleItem(itemName, isShow) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            globalItemsState[itemName] = isShow ? 'block' : 'none';
+            updateItemsUI();
+            if (itemName === 'Ô Ẩn số' && !isShow) {
+                mysteryRevealed = false;
+                saveRoomState({ itemsState: Object.assign({}, globalItemsState) });
+            } else {
+                updateWheelStateFields({ itemsState: Object.assign({}, globalItemsState) });
+            }
+            sendEvent('toggle_item', { itemName, isShow });
+        }
+
+        function setItemAngle(itemName, angleValue) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const parsedAngle = parseInt(angleValue, 10);
+            const safeAngle = isNaN(parsedAngle) ? 0 : parsedAngle;
+            globalItemAngles[itemName] = safeAngle;
+            updateWheelStateFields({ itemAngles: Object.assign({}, globalItemAngles) });
+            sendEvent('set_item_angle', { itemName, angle: safeAngle });
+        }
+
+        // Thêm hàm xáo và phân bố điểm cho Nón Phụ
+        function shuffleSubWheel() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            // Range điểm cố định gồm chuẩn xác 24 ô theo yêu cầu:
+            // 5x15k, 4x20k, 4x25k, 3x30k, 3x35k, 2x40k, 2x45k, 1x50k (Tổng = 24 ô)
+            let baseWedges = [
+                15000, 15000, 15000, 15000, 15000,
+                20000, 20000, 20000, 20000,
+                25000, 25000, 25000, 25000,
+                30000, 30000, 30000,
+                35000, 35000, 35000,
+                40000, 40000,
+                45000, 45000,
+                50000
+            ];
+
+            // Thuật toán xáo bài ngẫu nhiên Fisher-Yates công bằng
+            for (let i = baseWedges.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [baseWedges[i], baseWedges[j]] = [baseWedges[j], baseWedges[i]];
+            }
+
+            currentSpecialWedges = baseWedges;
+            updateWheelStateFields({ specialWedges: baseWedges, popupDisplay: 'none' });
+
+            // Gửi sự kiện cập nhật cấu trúc mảng nón phụ sang hệ thống Realtime
+            sendEvent('shuffle_special', { wedges: baseWedges });
+
+            // Render sơ đồ màu sắc đồ họa hiển thị lên Controller
+            renderSubGrid(baseWedges);
+        }
+
+        function renderSubGrid(wedges) {
+            const container = document.getElementById('subGridContainer');
+            container.innerHTML = '';
+
+            wedges.forEach((val, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'wedge-cell';
+                cell.innerText = `Ô ${index + 1}\n${val.toLocaleString('vi-VN')} đ`;
+
+                // Thiết lập thuộc tính chữ trắng đậm chuẩn mực
+                cell.style.color = '#ffffff';
+                cell.style.fontWeight = 'bold';
+
+                // Xử lý phân bổ sơ đồ màu sắc theo yêu cầu đề bài
+                if (val === 50000) {
+                    cell.style.backgroundColor = '#800080'; // Ô 50.000 màu tím #800080, chữ đậm trắng
+                    cell.style.color = '#ffffff';
+                } else if (val === 45000) {
+                    cell.style.backgroundColor = '#ff00ff'; // Ô 45.000 màu ff00ff
+                    cell.style.color = '#000000';
+                } else {
+                    cell.style.backgroundColor = 'red'; // Các ô còn lại màu đỏ
+                    cell.style.color = '#ffffff';
+                }
+                container.appendChild(cell);
+            });
+        }
+
+        let currentSpecialWedges = [];
+
+        function shuffleSpecialWheel() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const prizeRadio = document.querySelector('input[name="specialPrize"]:checked').value;
+            let wedges = [];
+            if (prizeRadio === "he_so") {
+                wedges = [
+                    ...Array(6).fill("x1"), ...Array(5).fill("x2"), ...Array(4).fill("x3"),
+                    ...Array(3).fill("x4"), ...Array(3).fill("x5"), ...Array(2).fill("x10"), "x20"
+                ];
+            } else {
+                const topPrize = parseInt(prizeRadio);
+                wedges = [
+                    ...Array(5).fill(30000), ...Array(4).fill(35000), ...Array(4).fill(40000),
+                    ...Array(3).fill(45000), ...Array(3).fill(50000), ...Array(2).fill(55000), ...Array(2).fill(75000), topPrize
+                ];
+            }
+
+            for (let i = wedges.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [wedges[i], wedges[j]] = [wedges[j], wedges[i]];
+            }
+            currentSpecialWedges = wedges;
+            renderGrid(wedges);
+            updateWheelStateFields({ specialWedges: wedges, popupDisplay: 'none' });
+            sendEvent('shuffle_special', { wedges: wedges });
+        }
+
+        function renderGrid(wedges) {
+            const container = document.getElementById('specialGridContainer');
+            container.innerHTML = '';
+            if (!wedges || wedges.length === 0) return;
+            const parseVal = (v) => typeof v === 'string' ? parseInt(v.replace('x', '')) : v;
+            const numericWedges = wedges.map(parseVal);
+            const uniqueSorted = [...new Set(numericWedges)].sort((a, b) => b - a);
+            const highestVal = uniqueSorted[0];
+            const secondHighestVal = uniqueSorted[1];
+
+            wedges.forEach((val, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'wedge-cell';
+                let displayStr = typeof val === 'number' ? `${val.toLocaleString('vi-VN')} đ` : val;
+                cell.innerText = `Ô ${index + 1}\n${displayStr}`;
+                cell.style.fontWeight = 'bold';
+                let currentNum = parseVal(val);
+                if (currentNum === highestVal) {
+                    cell.style.backgroundColor = '#0000ff';
+                    cell.style.color = '#ffffff';
+                } else if (currentNum === secondHighestVal) {
+                    cell.style.backgroundColor = 'green';
+                    cell.style.color = '#ffffff';
+                } else {
+                    cell.style.backgroundColor = '#ffff00';
+                    cell.style.color = '#000000';
+                }
+                container.appendChild(cell);
+            });
+        }
+
+        function showValue() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            sendEvent('show_value', {});
+        }
+        function hideValue() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            sendEvent('hide_value', {});
+        }
+        function findHighestWedge() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const startTime = Date.now();
+            sendEvent('find_highest', { startTime });
+        }
+
+        const defaultItemsConfig = [
+            { name: "Thẻ Phần thưởng", angle: 15 },
+            { name: "Thẻ 1/2 thứ 1", angle: 30 },
+            { name: "Thẻ 1/2 thứ 2", angle: 240 },
+            { name: "Thẻ Cơ hội", angle: 45 },
+            { name: "Thẻ Nhân Đôi", angle: 180 },
+            { name: "Thẻ Kháng Mất điểm", angle: 105 },
+            { name: "Thẻ Bảo vệ", angle: 210 },
+            { name: "Thẻ Thêm lượt", angle: 255 },
+            { name: "Thẻ May rủi", angle: 60 },
+            { name: "Thẻ May mắn", angle: 120 },
+            { name: "Thẻ Tích điểm", angle: 270 },
+            { name: "Ô Độc đắc", angle: 135 },
+            { name: "Ô Ẩn số", angle: 315 },
+            { name: "Ô Bí Mật 1", angle: 150 },
+            { name: "Ô Bí Mật 2", angle: 330 },
+            { name: "Ô Siêu Tốc", angle: 135 },
+            { name: "Ô Thêm lượt", angle: 315 },
+            { name: "Ô Két sắt", angle: 135 },
+            { name: "Ô 1 Triệu", angle: 135 }
+        ];
+
+        defaultItemsConfig.forEach(item => {
+            globalItemAngles[item.name] = item.angle;
+        });
+
+        const container = document.getElementById('itemsContainer');
+        defaultItemsConfig.forEach(function (item, idx) {
+            const div = document.createElement('div');
+            div.className = 'item-card';
+
+            const titleDiv = document.createElement('div');
+            titleDiv.style.marginBottom = '4px';
+            titleDiv.innerText = item.name;
+
+            const selectEl = document.createElement('select');
+            selectEl.id = 'item-angle-' + idx;
+            selectEl.className = 'item-angle-select';
+            for (let deg = 0; deg <= 360; deg += 15) {
+                const opt = document.createElement('option');
+                opt.value = deg;
+                opt.innerText = deg + '°';
+                if (deg === item.angle) opt.selected = true;
+                selectEl.appendChild(opt);
+            }
+            selectEl.onchange = function () {
+                setItemAngle(item.name, this.value);
+            };
+
+            const btnRow = document.createElement('div');
+            btnRow.className = 'flex-row';
+            btnRow.style.justifyContent = 'center';
+
+            const showBtn = document.createElement('button');
+            showBtn.id = 'btn-item-show-' + idx;
+            showBtn.style.padding = '4px 8px';
+            showBtn.style.fontSize = '11px';
+            showBtn.innerText = 'Hiện';
+            showBtn.onclick = function () {
+                toggleItem(item.name, true);
+            };
+
+            const hideBtn = document.createElement('button');
+            hideBtn.id = 'btn-item-hide-' + idx;
+            hideBtn.style.padding = '4px 8px';
+            hideBtn.style.fontSize = '11px';
+            hideBtn.className = 'btn-off';
+            hideBtn.innerText = 'Ẩn';
+            hideBtn.onclick = function () {
+                toggleItem(item.name, false);
+            };
+
+            btnRow.appendChild(showBtn);
+            btnRow.appendChild(hideBtn);
+
+            div.appendChild(titleDiv);
+            div.appendChild(selectEl);
+            div.appendChild(btnRow);
+            container.appendChild(div);
+        });
+
+        function updateItemsUI() {
+            defaultItemsConfig.forEach(function (item, idx) {
+                const sel = document.getElementById('item-angle-' + idx);
+                if (sel && globalItemAngles[item.name] !== undefined) {
+                    sel.value = String(globalItemAngles[item.name]);
+                }
+                const showBtn = document.getElementById('btn-item-show-' + idx);
+                if (showBtn) {
+                    if (globalItemsState[item.name] === 'block') {
+                        showBtn.classList.add('btn-item-active');
+                    } else {
+                        showBtn.classList.remove('btn-item-active');
+                    }
+                }
+            });
+        }
+
+        // --- HỆ THỐNG XỬ LÝ ĐIỂM SỐ & THẺ NGƯỜI CHƠI ---
+        let globalScores = {
+            redRound: 0, redTotal: 0,
+            yellowRound: 0, yellowTotal: 0,
+            blueRound: 0, blueTotal: 0
+        };
+
+        let playerCardsState = {
+            red: Array(14).fill(false),
+            yellow: Array(14).fill(false),
+            blue: Array(14).fill(false)
+        };
+
+        const playerCardNames = [
+            "Thẻ 1/2 (1)", "Thẻ 1/2 (2)", "Cơ Hội", "Kháng Mất Điểm", "10.000",
+            "1 Triệu", "Thẻ Nhân Đôi", "Bảo Vệ", "Thẻ Thêm Lượt", "Ô Nhân Đôi", "Ô Thêm Lượt",
+            "Thẻ May mắn", "Thẻ May rủi", "Thẻ Tích điểm"
+        ];
+
+        // Hàm xử lý định dạng dấu chấm phân tách phần nghìn khi người dùng gõ
+        function formatNumberInput(input) {
+            let value = input.value.replace(/\D/g, "");
+            if (value === "") {
+                input.value = "";
+                return;
+            }
+            input.value = Number(value).toLocaleString('vi-VN');
+        }
+
+        function syncScoresToWheel(saveToDb) {
+            if (saveToDb !== false) saveRoomState();
+            sendEvent('sync_scores', globalScores);
+            document.getElementById('ctrl-red-round-box').innerText = "Điểm Vòng: " + globalScores.redRound.toLocaleString('vi-VN');
+            document.getElementById('ctrl-red-total-box').innerText = "Điểm Tổng: " + globalScores.redTotal.toLocaleString('vi-VN');
+            document.getElementById('ctrl-yellow-round-box').innerText = "Điểm Vòng: " + globalScores.yellowRound.toLocaleString('vi-VN');
+            document.getElementById('ctrl-yellow-total-box').innerText = "Điểm Tổng: " + globalScores.yellowTotal.toLocaleString('vi-VN');
+            document.getElementById('ctrl-blue-round-box').innerText = "Điểm Vòng: " + globalScores.blueRound.toLocaleString('vi-VN');
+            document.getElementById('ctrl-blue-total-box').innerText = "Điểm Tổng: " + globalScores.blueTotal.toLocaleString('vi-VN');
+        }
+
+        function modifyScore(color, type, operation) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const inputEl = document.getElementById(`score-input-${color}`);
+            const freqEl = document.getElementById(`freq-input-${color}`);
+
+            // Loại bỏ tất cả dấu chấm trước khi tiến hành parse thành số nguyên xử lý tính toán
+            let cleanValue = inputEl ? inputEl.value.replace(/\./g, "") : "";
+            let val = parseInt(cleanValue);
+            if (isNaN(val)) val = 0;
+
+            let freq = 1;
+            if (freqEl) {
+                let parsedFreq = parseInt(freqEl.value);
+                if (!isNaN(parsedFreq) && parsedFreq > 0) {
+                    freq = parsedFreq;
+                }
+            }
+
+            let effectiveVal = val * freq;
+
+            let key = color + type.charAt(0).toUpperCase() + type.slice(1);
+            if (operation === 'add') {
+                globalScores[key] += effectiveVal;
+            } else if (operation === 'sub') {
+                globalScores[key] -= effectiveVal;
+            }
+            syncScoresToWheel();
+            // Không tự động xóa text điểm theo yêu cầu
+        }
+
+        function clearScoreText(color) {
+            const inputEl = document.getElementById(`score-input-${color}`);
+            if (inputEl) inputEl.value = '';
+            const freqEl = document.getElementById(`freq-input-${color}`);
+            if (freqEl) freqEl.value = '1';
+        }
+
+        function addRoundToTotal(color) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const roundKey = color + 'Round';
+            const totalKey = color + 'Total';
+            globalScores[totalKey] += (globalScores[roundKey] || 0);
+            syncScoresToWheel();
+        }
+
+        function modifyScoreMultiplier(color, multiplier) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            let key = color + 'Round';
+            globalScores[key] = Math.round(globalScores[key] * multiplier);
+            syncScoresToWheel();
+        }
+
+        function resetPlayerScore(color, type) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            if (type === 'round') {
+                globalScores[color + 'Round'] = 0;
+            } else if (type === 'total') {
+                globalScores[color + 'Total'] = 0;
+            }
+            syncScoresToWheel();
+        }
+
+        function resetAllScores(type) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            if (type === 'round') {
+                globalScores.redRound = 0;
+                globalScores.yellowRound = 0;
+                globalScores.blueRound = 0;
+            } else if (type === 'total') {
+                globalScores.redTotal = 0;
+                globalScores.yellowTotal = 0;
+                globalScores.blueTotal = 0;
+            }
+            syncScoresToWheel();
+        }
+
+        function togglePlayerCardState(color, cardIdx) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            let currentState = !playerCardsState[color][cardIdx];
+            playerCardsState[color][cardIdx] = currentState;
+
+            const btn = document.getElementById(`btn-card-${color}-${cardIdx}`);
+            if (currentState) btn.classList.add('active-status');
+            else btn.classList.remove('active-status');
+
+            sendEvent('toggle_player_card', { color, cardIdx, isActive: currentState });
+            saveRoomState();
+        }
+
+        function initPlayerCardControls(color) {
+            const pContainer = document.getElementById(`cards-row-${color}`);
+            pContainer.innerHTML = '';
+            playerCardNames.forEach((name, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `btn-card-${color}-${idx}`;
+                btn.className = 'btn-card-toggle';
+                btn.innerText = name;
+                btn.onclick = () => togglePlayerCardState(color, idx);
+                pContainer.appendChild(btn);
+            });
+        }
+
+        function resetWheelRotation() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            currentRotation = 270;
+            sendEvent('reset_rotation', {});
+            saveRoomState();
+            updateWheelStateFields({ currentRotation: 270, popupDisplay: 'none' });
+        }
+
+        function setTurn(target, state) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            sendEvent('set_turn', { target, state });
+            if (target === 'all') {
+                globalTurns.red = state;
+                globalTurns.yellow = state;
+                globalTurns.blue = state;
+            } else {
+                globalTurns[target] = state;
+            }
+            updateWheelStateFields({ turns: Object.assign({}, globalTurns) });
+        }
+
+        function toggleSpinBtn(target, state) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            sendEvent('toggle_spin_btn', { target, state });
+            if (target === 'all') {
+                globalSpinButtons.red = state;
+                globalSpinButtons.yellow = state;
+                globalSpinButtons.blue = state;
+            } else {
+                if (state === true) {
+                    globalSpinButtons.red = (target === 'red');
+                    globalSpinButtons.yellow = (target === 'yellow');
+                    globalSpinButtons.blue = (target === 'blue');
+                } else {
+                    globalSpinButtons[target] = false;
+                }
+            }
+            updateWheelStateFields({ spinButtons: Object.assign({}, globalSpinButtons) });
+        }
+
+        // Khởi tạo các thẻ người chơi
+        initPlayerCardControls('red');
+        initPlayerCardControls('yellow');
+        initPlayerCardControls('blue');
+
+        // Mặc định khóa tất cả các nút khi chưa có phòng
+        setControllerActive(false);
+
+        if (roomId) {
+            initChannel();
+            loadRoomInfo().then(function () {
+                loadRoomState().then(function () {
+                    syncScoresToWheel(false);
+                });
+            });
+        } else {
+            renderCurrentRoomInfo(null);
+            setControllerActive(false);
+        }
+
+        // BỔ SUNG: Hàm phát/dừng âm thanh theo phòng
+        function triggerSound(soundFile) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            sendEvent('play_sound', { sound: soundFile, timestamp: Date.now() });
+        }
+
+        function easeTiltSubWheel(direction) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            try {
+                if (window.BroadcastChannel) {
+                    const bc = new BroadcastChannel('wheel_zoom_channel');
+                    bc.postMessage({ event: 'tilt_sub_wheel', direction: direction });
+                    bc.close();
+                }
+            } catch (e) {}
+            sendEvent('tilt_sub_wheel', { direction: direction });
+            updateWheelStateFields({ subWheelTilt: direction, zoomed: true });
+        }
+
+        // ==========================================
+        // 1. Ô ĐỘC ĐẮC (Cột 1)
+        // ==========================================
+        let jackpotScore = 0;
+        function updateJackpotDisplay() {
+            const el = document.getElementById('jackpotDisplayBox');
+            if (el) el.innerText = "Độc đắc: " + jackpotScore.toLocaleString('vi-VN') + " đ";
+        }
+        function setJackpotValue() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const input = document.getElementById('jackpotInput');
+            const val = parseInt(input.value.replace(/\./g, ''));
+            if (!isNaN(val)) {
+                jackpotScore = val;
+                updateJackpotDisplay();
+                saveRoomState();
+            }
+            input.value = '';
+        }
+        function modifyJackpotValue(type) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const input = document.getElementById('jackpotInput');
+            const val = parseInt(input.value.replace(/\./g, ''));
+            if (!isNaN(val)) {
+                if (type === 'add') jackpotScore += val;
+                else if (type === 'sub') jackpotScore -= val;
+                updateJackpotDisplay();
+                saveRoomState();
+            }
+            input.value = '';
+        }
+
+        // ==========================================
+        // 2. Ô ẨN SỐ (Cột 2)
+        // ==========================================
+        const mysteryNumberOptions = ["2.500", "5.000", "7.500", "10.000", "25.000", "Chia đôi", "Nhân đôi", "Mất lượt", "Mất điểm"];
+        let currentMysteryNumber = "5.000";
+        let mysteryRevealed = false;
+        function updateMysteryNumberDisplay() {
+            const el = document.getElementById('mysteryNumberDisplayBox');
+            if (el) el.innerText = "Ẩn số: " + currentMysteryNumber;
+        }
+        function randomMysteryNumber() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const idx = Math.floor(Math.random() * mysteryNumberOptions.length);
+            currentMysteryNumber = mysteryNumberOptions[idx];
+            mysteryRevealed = true;
+            globalItemsState['Ô Ẩn số'] = 'block';
+            updateItemsUI();
+            updateMysteryNumberDisplay();
+            saveRoomState({ itemsState: Object.assign({}, globalItemsState) });
+            sendEvent('toggle_item', { itemName: 'Ô Ẩn số', isShow: true });
+        }
+        function setMysteryNumber1000() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            currentMysteryNumber = "1.000";
+            mysteryRevealed = true;
+            globalItemsState['Ô Ẩn số'] = 'block';
+            updateItemsUI();
+            updateMysteryNumberDisplay();
+            saveRoomState({ itemsState: Object.assign({}, globalItemsState) });
+            sendEvent('toggle_item', { itemName: 'Ô Ẩn số', isShow: true });
+        }
+
+        // ==========================================
+        // 3. Ô KÉT SẮT (Cột 3)
+        // ==========================================
+        let safeScore = 0;
+        let safeCardsState = [false, false, false, false, false, false, false, false];
+        function updateSafeDisplay() {
+            const el = document.getElementById('safeDisplayBox');
+            if (el) el.innerText = "Két sắt: " + safeScore.toLocaleString('vi-VN') + " đ";
+            for (let i = 0; i < 8; i++) {
+                const btn = document.getElementById(`btn-safe-card-${i}`);
+                if (btn) {
+                    if (safeCardsState[i]) btn.classList.add('active-safe-card');
+                    else btn.classList.remove('active-safe-card');
+                }
+            }
+        }
+        function setSafeValue() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const input = document.getElementById('safeInput');
+            const val = parseInt(input.value.replace(/\./g, ''));
+            if (!isNaN(val)) {
+                safeScore = val;
+                updateSafeDisplay();
+                saveRoomState();
+            }
+            input.value = '';
+        }
+        function modifySafeValue(type) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            const input = document.getElementById('safeInput');
+            const val = parseInt(input.value.replace(/\./g, ''));
+            if (!isNaN(val)) {
+                if (type === 'add') safeScore += val;
+                else if (type === 'sub') safeScore -= val;
+                updateSafeDisplay();
+                saveRoomState();
+            }
+            input.value = '';
+        }
+        function toggleSafeCard(idx) {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            safeCardsState[idx] = !safeCardsState[idx];
+            updateSafeDisplay();
+            saveRoomState();
+        }
+
+        // ==========================================
+        // 4. Ô BÍ MẬT (Cột 4)
+        // ==========================================
+        let secretBox1 = "10.000";
+        let secretBox2 = "Mất điểm";
+        let secretBoxesHidden = false;
+
+        function updateSecretBoxesDisplay() {
+            const el1 = document.getElementById('secretBoxVal1');
+            const el2 = document.getElementById('secretBoxVal2');
+            if (!el1 || !el2) return;
+            if (secretBoxesHidden) {
+                el1.innerText = "❓ Ẩn";
+                el2.innerText = "❓ Ẩn";
+                el1.style.color = '#888888';
+                el2.style.color = '#888888';
+            } else {
+                el1.innerText = secretBox1;
+                el2.innerText = secretBox2;
+                el1.style.color = secretBox1 === '10.000' ? '#ffff00' : '#ffffff';
+                el2.style.color = secretBox2 === '10.000' ? '#ffff00' : '#ffffff';
+            }
+        }
+
+        function toggleSecretBoxesVisibility() {
+            secretBoxesHidden = !secretBoxesHidden;
+            updateSecretBoxesDisplay();
+            saveRoomState();
+        }
+
+        function randomSecretBoxes() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            // 50% khả năng giữ nguyên vị trí, 50% đổi vị trí cho nhau
+            if (Math.random() < 0.5) {
+                const temp = secretBox1;
+                secretBox1 = secretBox2;
+                secretBox2 = temp;
+            }
+            updateSecretBoxesDisplay();
+            saveRoomState();
+        }
+
+        // ==========================================
+        // 5. PHẦN THƯỞNG (Cột 4 - 24 ô, 6 hàng x 4 cột)
+        // ==========================================
+        const rewardItemsPool = [
+            "0", "50", "100", "200", "250", "300", "400", "500", "600", "700",
+            "750", "800", "900", "1.000", "1.250", "1.500", "1.750", "2.000",
+            "2.500", "x1.5", "x2", "Ngôi sao", "May rủi", "May mắn"
+        ];
+        let rewardBoxesState = [...rewardItemsPool];
+
+        function renderRewardsGrid() {
+            const container = document.getElementById('rewardsGridContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            for (let i = 0; i < 24; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'reward-cell';
+                cell.id = 'reward-cell-' + i;
+
+                const val = rewardBoxesState[i] !== undefined ? rewardBoxesState[i] : (i + 1);
+
+                const numEl = document.createElement('span');
+                numEl.className = 'reward-cell-num';
+                numEl.innerText = (i + 1);
+
+                const valEl = document.createElement('span');
+                valEl.className = 'reward-cell-val';
+                valEl.innerText = val;
+
+                if (val === 'Ngôi sao') {
+                    valEl.style.color = '#fbbf24';
+                } else if (val === 'May mắn') {
+                    valEl.style.color = '#34d399';
+                } else if (val === 'May rủi') {
+                    valEl.style.color = '#f87171';
+                } else if (val === 'x1.5' || val === 'x2') {
+                    valEl.style.color = '#e879f9';
+                }
+
+                cell.appendChild(numEl);
+                cell.appendChild(valEl);
+                container.appendChild(cell);
+            }
+        }
+
+        function randomRewards() {
+            if (!roomId || !channel) { showRoomError('Vui lòng bấm "Tạo phòng mới" trước khi thao tác!'); return; }
+            // Fisher-Yates shuffle
+            const arr = [...rewardItemsPool];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const temp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = temp;
+            }
+            rewardBoxesState = arr;
+            renderRewardsGrid();
+            saveRoomState();
+        }
+
+        // Cập nhật hiển thị mặc định ban đầu
+        updateJackpotDisplay();
+        updateMysteryNumberDisplay();
+        updateSafeDisplay();
+        updateSecretBoxesDisplay();
+        renderRewardsGrid();
+
+        const savedBg = localStorage.getItem('wheel_bg');
+        if (savedBg) {
+            currentWheelBgIndex = parseInt(savedBg) || 1;
+        }
+        updateBgButtonsUI(currentWheelBgIndex);
+
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.keyCode === 123) e.preventDefault();
+            if ((e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+
+</html>
